@@ -3,7 +3,7 @@ export function Footer() {
     <footer
       style={{
         borderTop: '1px solid var(--color-border)',
-        backgroundColor: 'var(--color-bg-surface)',
+        backgroundColor: 'var(--color-bg-base)',
         marginTop: 'auto',
       }}
     >
@@ -11,13 +11,13 @@ export function Footer() {
         style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: '1.25rem 1.5rem',
+          padding: '1rem 1.5rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '1rem',
           flexWrap: 'wrap',
-          fontSize: '0.8125rem',
+          fontSize: '0.75rem',
           color: 'var(--color-text-muted)',
         }}
       >

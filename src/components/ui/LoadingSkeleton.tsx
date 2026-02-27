@@ -7,10 +7,9 @@ export function LoadingSkeleton({ style }: LoadingSkeletonProps) {
   return (
     <div
       aria-hidden="true"
+      className="skeleton-shimmer"
       style={{
         borderRadius: '0.75rem',
-        backgroundColor: 'var(--color-bg-elevated)',
-        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         ...style,
       }}
     />

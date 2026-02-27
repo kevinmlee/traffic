@@ -15,8 +15,8 @@ export function ThemeToggle() {
     return (
       <div
         style={{
-          width: '2.25rem',
-          height: '2.25rem',
+          width: '2rem',
+          height: '2rem',
           borderRadius: '0.5rem',
           backgroundColor: 'var(--color-bg-elevated)',
         }}
@@ -35,21 +35,29 @@ export function ThemeToggle() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        width: '2.25rem',
-        height: '2.25rem',
+        width: '2rem',
+        height: '2rem',
         borderRadius: '0.5rem',
         backgroundColor: 'var(--color-bg-elevated)',
         border: '1px solid var(--color-border)',
         cursor: 'pointer',
-        color: 'var(--color-text-secondary)',
-        transition: 'background-color 0.15s, color 0.15s',
+        color: 'var(--color-text-muted)',
+        transition: 'background-color 0.15s, color 0.15s, border-color 0.15s',
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.color = 'var(--color-brand-500)';
+        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-brand-500)';
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.color = 'var(--color-text-muted)';
+        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
       }}
     >
       {isDark ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -64,8 +72,8 @@ export function ThemeToggle() {
       ) : (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

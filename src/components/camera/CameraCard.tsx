@@ -34,17 +34,19 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
         overflow: 'hidden',
         boxShadow: 'var(--shadow-card)',
         cursor: 'pointer',
-        transition: 'box-shadow 0.15s, transform 0.15s',
+        transition: 'box-shadow 0.2s, transform 0.2s, border-color 0.2s',
         display: 'flex',
         flexDirection: 'column',
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)';
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border-strong)';
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)';
         (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
       }}
     >
       {/* Image */}
@@ -58,11 +60,12 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
               zIndex: 1,
               padding: '0.2rem 0.5rem',
               borderRadius: '999px',
-              backgroundColor: 'rgba(0,0,0,0.55)',
+              backgroundColor: 'rgba(0,0,0,0.6)',
               color: '#fbbf24',
               fontSize: '0.6875rem',
               fontWeight: 600,
-              letterSpacing: '0.03em',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
             }}
             aria-label="Camera out of service"
           >
