@@ -79,6 +79,8 @@ export interface GeocodedLocation {
 export interface ApiCamerasResponse {
   cameras: Camera[];
   total: number;
+  hasMore: boolean;
+  offset: number;
   sources: string[];
 }
 

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { fetchAllCameras } from '@/lib/providers';
 import type { BoundingBox, ApiCamerasResponse, ApiErrorResponse } from '@/types';
 
+const DEFAULT_LIMIT = 30;
+const MAX_LIMIT = 100;
+
 export async function GET(request: Request): Promise<NextResponse<ApiCamerasResponse | ApiErrorResponse>> {
   const { searchParams } = new URL(request.url);
 
@@ -18,30 +21,25 @@ export async function GET(request: Request): Promise<NextResponse<ApiCamerasResp
     }
     const [north, south, east, west] = parts;
     bbox = { north, south, east, west };
-  } else {
-    // Individual params fallback
-    const north = searchParams.get('north');
-    const south = searchParams.get('south');
-    const east = searchParams.get('east');
-    const west = searchParams.get('west');
-
-    if (north && south && east && west) {
-      bbox = {
-        north: parseFloat(north),
-        south: parseFloat(south),
-        east: parseFloat(east),
-        west: parseFloat(west),
-      };
-    }
   }
 
+  const limitParam = parseInt(searchParams.get('limit') ?? String(DEFAULT_LIMIT), 10);
+  const offsetParam = parseInt(searchParams.get('offset') ?? '0', 10);
+  const limit = Math.min(isNaN(limitParam) ? DEFAULT_LIMIT : limitParam, MAX_LIMIT);
+  const offset = isNaN(offsetParam) || offsetParam < 0 ? 0 : offsetParam;
+
   try {
-    const cameras = await fetchAllCameras({ bbox });
+    // Fetch all matching cameras (providers handle bbox filtering)
+    const allCameras = await fetchAllCameras({ bbox });
+
+    const page = allCameras.slice(offset, offset + limit);
 
     return NextResponse.json({
-      cameras,
-      total: cameras.length,
-      sources: Array.from(new Set(cameras.map(c => c.provider))),
+      cameras: page,
+      total: allCameras.length,
+      hasMore: offset + limit < allCameras.length,
+      offset,
+      sources: Array.from(new Set(allCameras.map(c => c.provider))),
     });
   } catch (err) {
     console.error('Error fetching cameras:', err);

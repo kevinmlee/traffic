@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { SkipNav } from '@/components/ui/SkipNav';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { ViewToggle } from '@/components/ui/ViewToggle';
@@ -22,54 +22,111 @@ import type {
 } from '@/types';
 import type { ViewMode } from '@/components/ui/ViewToggle';
 
+const PAGE_SIZE = 30;
+
 export default function HomePage() {
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [filters, setFilters] = useState<FilterState>(createDefaultFilters);
   const [view, setView] = useState<ViewMode>('grid');
   const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
+
+  // Loading states: initial vs. loading more pages
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+
   const [currentBbox, setCurrentBbox] = useState<BoundingBox | undefined>();
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadCameras = useCallback(async (bbox?: BoundingBox) => {
-    setIsLoading(true);
-    setError(null);
+  // Track current offset and whether a fetch is already in flight
+  const offsetRef = useRef(0);
+  const isFetchingRef = useRef(false);
+  const bboxRef = useRef<BoundingBox | undefined>(undefined);
 
-    const params = new URLSearchParams();
+  // Sentinel div at the bottom of the grid; IntersectionObserver watches it
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const fetchPage = useCallback(async (bbox: BoundingBox | undefined, offset: number, append: boolean) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+      setError(null);
+    }
+
+    const params = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      offset: String(offset),
+    });
     if (bbox) {
       params.set('bbox', `${bbox.north},${bbox.south},${bbox.east},${bbox.west}`);
     }
 
     try {
-      const res = await fetch(`/api/cameras${params.size ? `?${params.toString()}` : ''}`);
+      const res = await fetch(`/api/cameras?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch cameras');
       const data: ApiCamerasResponse = await res.json() as ApiCamerasResponse;
-      setCameras(data.cameras);
+
+      setCameras(prev => append ? [...prev, ...data.cameras] : data.cameras);
+      setHasMore(data.hasMore);
+      setTotalCount(data.total);
+      offsetRef.current = offset + data.cameras.length;
     } catch {
       setError('Failed to load camera data. Please try again.');
-      setCameras([]);
+      if (!append) setCameras([]);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
-  // Load all California cameras on initial mount
+  // Initial load — all California cameras
   useEffect(() => {
-    void loadCameras();
-  }, [loadCameras]);
+    void fetchPage(undefined, 0, false);
+  }, [fetchPage]);
+
+  // IntersectionObserver: load next page when sentinel scrolls into view
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMore && !isFetchingRef.current) {
+          void fetchPage(bboxRef.current, offsetRef.current, true);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, fetchPage]);
 
   const handleSearch = useCallback((bbox: BoundingBox, location: GeocodedLocation) => {
+    bboxRef.current = bbox;
+    offsetRef.current = 0;
     setCurrentBbox(bbox);
     setLocationLabel(location.displayName);
-    void loadCameras(bbox);
-  }, [loadCameras]);
+    setCameras([]);
+    void fetchPage(bbox, 0, false);
+  }, [fetchPage]);
 
   const handleClear = useCallback(() => {
+    bboxRef.current = undefined;
+    offsetRef.current = 0;
     setCurrentBbox(undefined);
     setLocationLabel(null);
-    void loadCameras();
-  }, [loadCameras]);
+    setCameras([]);
+    void fetchPage(undefined, 0, false);
+  }, [fetchPage]);
 
   const handleToggleCategory = useCallback((category: CameraCategory) => {
     setFilters(prev => toggleCategory(prev, category));
@@ -108,22 +165,14 @@ export default function HomePage() {
               gap: '1.25rem',
             }}
           >
-            {/* Search + controls row */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.875rem',
-              }}
-            >
-              {/* Search bar */}
+            {/* Search + controls */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <SearchBar
                 onSearch={handleSearch}
                 onClear={handleClear}
                 isLoading={isLoading}
               />
 
-              {/* Status + controls row */}
               <div
                 style={{
                   display: 'flex',
@@ -133,7 +182,6 @@ export default function HomePage() {
                   flexWrap: 'wrap',
                 }}
               >
-                {/* Left: filters + status label */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flex: 1 }}>
                   <FilterChips
                     filters={filters}
@@ -146,16 +194,12 @@ export default function HomePage() {
                       aria-atomic="true"
                       style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}
                     >
-                      {locationLabel
-                        ? `Near ${locationLabel.split(',')[0]}`
-                        : 'All California'}
+                      {locationLabel ? `Near ${locationLabel.split(',')[0]}` : 'All California'}
                       {' · '}
-                      {filteredCameras.length} camera{filteredCameras.length !== 1 ? 's' : ''}
+                      {totalCount.toLocaleString()} camera{totalCount !== 1 ? 's' : ''}
                     </span>
                   )}
                 </div>
-
-                {/* Right: view toggle */}
                 <ViewToggle view={view} onChange={setView} />
               </div>
             </div>
@@ -177,15 +221,21 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Loading skeleton */}
+            {/* Initial loading skeleton */}
             {isLoading && <SkeletonGrid count={12} />}
 
-            {/* Grid view */}
+            {/* Grid view with infinite scroll */}
             {!isLoading && view === 'grid' && (
-              <CameraGrid cameras={filteredCameras} onSelect={setSelectedCamera} />
+              <CameraGrid
+                cameras={filteredCameras}
+                onSelect={setSelectedCamera}
+                isLoadingMore={isLoadingMore}
+                hasMore={hasMore}
+                sentinelRef={sentinelRef}
+              />
             )}
 
-            {/* Map view */}
+            {/* Map view — loads all currently-fetched cameras */}
             {!isLoading && view === 'map' && (
               <MapView
                 cameras={filteredCameras}
@@ -199,7 +249,6 @@ export default function HomePage() {
         <Footer />
       </div>
 
-      {/* Camera detail modal */}
       {selectedCamera && (
         <CameraModal
           camera={selectedCamera}
