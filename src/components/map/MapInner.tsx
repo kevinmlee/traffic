@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { MapContainer, ZoomControl } from 'react-leaflet';
 import { TileLayerThemed } from './TileLayerThemed';
 import { CameraMarker } from './CameraMarker';
@@ -18,18 +17,7 @@ const DEFAULT_CENTER: [number, number] = [37.5, -119.5];
 const DEFAULT_ZOOM = 7;
 
 export default function MapInner({ cameras, onCameraSelect, bbox }: MapInnerProps) {
-  // Fix Leaflet's default marker icon paths broken by bundlers
-  useEffect(() => {
-    import('leaflet').then((L) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
-    }).catch(console.error);
-  }, []);
+  // CameraMarker uses a custom SVG DivIcon — no default icon patching needed
 
   // Compute center from bbox if provided, else from cameras
   let center: [number, number] = DEFAULT_CENTER;

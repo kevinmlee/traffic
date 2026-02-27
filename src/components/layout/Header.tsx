@@ -7,9 +7,11 @@ export function Header() {
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        backgroundColor: 'var(--color-bg-surface)',
-        borderBottom: '1px solid var(--color-border)',
-        backdropFilter: 'blur(16px)',
+        backgroundColor: 'var(--glass-bg)',
+        backdropFilter: 'var(--glass-blur)',
+        WebkitBackdropFilter: 'var(--glass-blur)',
+        borderBottom: '1px solid var(--glass-border)',
+        boxShadow: 'inset 0 -1px 0 0 rgba(255,255,255,0.04), 0 1px 24px -4px rgb(0 0 0 / 0.12)',
       }}
     >
       <div
@@ -29,84 +31,63 @@ export function Header() {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.625rem',
             userSelect: 'none',
           }}
-          aria-label="TrafficEye"
+          aria-label="Trafficam"
         >
-          {/* SVG mark: eye with converging road lanes */}
+          {/* Mark: amber square with aperture cutout */}
           <svg
-            width="34"
-            height="22"
-            viewBox="0 0 34 22"
+            width="30"
+            height="30"
+            viewBox="0 0 30 30"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
           >
-            {/* Outer eye shape — amber gradient stroke */}
             <defs>
-              <linearGradient id="eye-grad" x1="0" y1="0" x2="34" y2="0" gradientUnits="userSpaceOnUse">
+              <linearGradient id="mark-grad" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
                 <stop offset="0%" stopColor="#fb923c" />
-                <stop offset="100%" stopColor="#f97316" />
+                <stop offset="100%" stopColor="#ea6c0a" />
               </linearGradient>
-              <clipPath id="eye-clip">
-                <path d="M1 11 C6 3, 28 3, 33 11 C28 19, 6 19, 1 11 Z" />
-              </clipPath>
             </defs>
-            {/* Eye outline */}
-            <path
-              d="M1 11 C6 3, 28 3, 33 11 C28 19, 6 19, 1 11 Z"
-              stroke="url(#eye-grad)"
-              strokeWidth="1.5"
-              fill="none"
-              strokeLinejoin="round"
-            />
-            {/* Iris circle */}
-            <circle
-              cx="17"
-              cy="11"
-              r="5.5"
-              fill="url(#eye-grad)"
-              opacity="0.15"
-            />
-            <circle
-              cx="17"
-              cy="11"
-              r="5.5"
-              stroke="url(#eye-grad)"
-              strokeWidth="1.5"
-              fill="none"
-            />
-            {/* Pupil — solid amber dot */}
-            <circle cx="17" cy="11" r="2.25" fill="#f97316" />
-            {/* Road lane lines converging into iris from bottom */}
-            <g clipPath="url(#eye-clip)" opacity="0.55">
-              <line x1="17" y1="19" x2="13" y2="16.5" stroke="#f97316" strokeWidth="1" strokeLinecap="round" />
-              <line x1="17" y1="19" x2="17" y2="16.5" stroke="#f97316" strokeWidth="1" strokeLinecap="round" />
-              <line x1="17" y1="19" x2="21" y2="16.5" stroke="#f97316" strokeWidth="1" strokeLinecap="round" />
-            </g>
+            {/* Rounded square background */}
+            <rect width="30" height="30" rx="7" fill="url(#mark-grad)" />
+            {/* Aperture blades — 6 rotated rectangles clipped to a circle */}
+            {/* Outer lens ring */}
+            <circle cx="15" cy="15" r="9" stroke="white" strokeWidth="1.5" fill="none" opacity="0.5" />
+            {/* 6-blade shutter: rotated rectangles */}
+            {[0, 60, 120, 180, 240, 300].map((deg) => (
+              <rect
+                key={deg}
+                x="13.5"
+                y="8"
+                width="3"
+                height="8"
+                rx="1.5"
+                fill="white"
+                opacity="0.88"
+                transform={`rotate(${deg} 15 15)`}
+              />
+            ))}
+            {/* Center lens dot */}
+            <circle cx="15" cy="15" r="2.5" fill="url(#mark-grad)" />
+            <circle cx="15" cy="15" r="1.25" fill="white" opacity="0.9" />
           </svg>
 
-          {/* Wordmark using Syne display font */}
+          {/* Wordmark: TRAFFICAM in Syne */}
           <span
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: '1.1rem',
-              letterSpacing: '-0.03em',
+              fontSize: '1rem',
+              fontWeight: 800,
+              letterSpacing: '0.06em',
               lineHeight: 1,
+              textTransform: 'uppercase',
             }}
           >
-            <span style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              Traffic
-            </span>
-            <span
-              style={{
-                fontWeight: 800,
-                color: 'var(--color-brand-500)',
-              }}
-            >
-              Eye
-            </span>
+            <span style={{ color: 'var(--color-text-primary)' }}>Traffic</span>
+            <span style={{ color: 'var(--color-brand-500)' }}>cam</span>
           </span>
         </div>
 
