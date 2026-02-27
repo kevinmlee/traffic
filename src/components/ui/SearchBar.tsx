@@ -297,7 +297,7 @@ export function SearchBar({ onSearch, onClear, isLoading = false }: SearchBarPro
                   onMouseLeave={() => setActiveIndex(-1)}
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     gap: '0.625rem',
                     padding: '0.5rem 0.75rem',
                     cursor: 'pointer',
@@ -316,22 +316,37 @@ export function SearchBar({ onSearch, onClear, isLoading = false }: SearchBarPro
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     aria-hidden="true"
-                    style={{ flexShrink: 0 }}
+                    style={{ flexShrink: 0, marginTop: '0.125rem' }}
                   >
                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  <span
-                    style={{
-                      fontSize: '0.9rem',
-                      color: 'var(--color-text-primary)',
-                      minWidth: 0,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {suggestion.shortName}
+                  <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                    <span
+                      title={suggestion.shortName}
+                      style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        color: 'var(--color-text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {suggestion.shortName}
+                    </span>
+                    <span
+                      title={suggestion.displayName}
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--color-text-muted)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {suggestion.displayName}
+                    </span>
                   </span>
                 </li>
               ))}

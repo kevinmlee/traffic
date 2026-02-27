@@ -87,6 +87,7 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
       {/* Info */}
       <div style={{ padding: '0.75rem 0.875rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
         <h3
+          title={camera.name}
           style={{
             fontSize: '0.9375rem',
             fontWeight: 600,
@@ -102,6 +103,7 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
         </h3>
         {subtitle && (
           <p
+            title={subtitle}
             style={{
               fontSize: '0.8125rem',
               color: 'var(--color-text-secondary)',
@@ -115,6 +117,7 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
           </p>
         )}
         <p
+          title={`${camera.county} County · District ${camera.district}`}
           style={{
             fontSize: '0.75rem',
             color: 'var(--color-text-muted)',
