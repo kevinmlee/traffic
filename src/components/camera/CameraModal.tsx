@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { CameraImage, CameraImagePlaceholder } from './CameraImage';
+import { LiveFeedPlayer } from './LiveFeedPlayer';
 import type { Camera } from '@/types';
 
 interface CameraModalProps {
@@ -12,6 +13,8 @@ interface CameraModalProps {
 export function CameraModal({ camera, onClose }: CameraModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const hasStream = Boolean(camera.streamingVideoUrl);
+  const [activeTab, setActiveTab] = useState<'feed' | 'snapshot'>(hasStream ? 'feed' : 'snapshot');
 
   // Focus close button on mount
   useEffect(() => {
@@ -174,16 +177,71 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
           </button>
         </div>
 
-        {/* Image */}
+        {/* Tab bar (only shown when stream is available) */}
+        {hasStream && (
+          <div
+            role="tablist"
+            aria-label="Camera view mode"
+            style={{
+              display: 'flex',
+              gap: '0',
+              borderBottom: '1px solid var(--color-border)',
+              paddingLeft: '1.5rem',
+              flexShrink: 0,
+            }}
+          >
+            {(['feed', 'snapshot'] as const).map((tab) => (
+              <button
+                key={tab}
+                role="tab"
+                aria-selected={activeTab === tab}
+                aria-controls={`modal-panel-${tab}`}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: '0.625rem 1rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  borderBottom: activeTab === tab ? '2px solid var(--color-brand-500)' : '2px solid transparent',
+                  backgroundColor: 'transparent',
+                  color: activeTab === tab ? 'var(--color-brand-500)' : 'var(--color-text-secondary)',
+                  cursor: 'pointer',
+                  marginBottom: '-1px',
+                  transition: 'color 0.15s',
+                }}
+              >
+                {tab === 'feed' ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="2" /><path d="M12 2a10 10 0 0 1 7.38 16.82" /><path d="M12 2a10 10 0 0 0-7.38 16.82" />
+                    </svg>
+                    Live Feed
+                    {activeTab === 'feed' && (
+                      <span style={{ display: 'inline-flex', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e', flexShrink: 0 }} aria-hidden="true" />
+                    )}
+                  </span>
+                ) : 'Snapshot'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Media panel */}
         <div
+          id={`modal-panel-${activeTab}`}
+          role="tabpanel"
+          aria-label={activeTab === 'feed' ? 'Live camera feed' : 'Camera snapshot'}
           style={{
             position: 'relative',
             aspectRatio: '16/9',
             backgroundColor: 'var(--color-bg-elevated)',
             flexShrink: 0,
+            overflow: 'hidden',
           }}
         >
-          {camera.imageUrl ? (
+          {activeTab === 'feed' && camera.streamingVideoUrl ? (
+            <LiveFeedPlayer streamUrl={camera.streamingVideoUrl} title={camera.name} />
+          ) : camera.imageUrl ? (
             <CameraImage
               imageUrl={camera.imageUrl}
               alt={`Live traffic camera view at ${camera.name}: ${camera.imageDescription}`}

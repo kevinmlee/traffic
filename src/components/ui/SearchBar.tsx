@@ -188,7 +188,7 @@ export function SearchBar({ onSearch, onClear, isLoading = false }: SearchBarPro
           <input
             ref={inputRef}
             id={inputId}
-            type="search"
+            type="text"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
