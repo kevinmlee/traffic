@@ -84,6 +84,7 @@ export function SearchBar({ onSearch, onClear, isLoading = false }: SearchBarPro
     setShowSuggestions(false);
     setError(null);
     lastGeocodedRef.current = suggestion.shortName;
+    inputRef.current?.blur();
     onSearch(bboxFromCenter(suggestion.latitude, suggestion.longitude, 30), {
       displayName: suggestion.displayName,
       latitude: suggestion.latitude,
