@@ -1,6 +1,8 @@
 'use client';
 
+import { useRef, useState, useCallback } from 'react';
 import { CameraImage, CameraImagePlaceholder } from './CameraImage';
+import { CardLiveFeed } from './CardLiveFeed';
 import type { Camera } from '@/types';
 
 interface CameraCardProps {
@@ -9,6 +11,10 @@ interface CameraCardProps {
 }
 
 export function CameraCard({ camera, onSelect }: CameraCardProps) {
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showStream, setShowStream] = useState(false);
+  const [streamFailed, setStreamFailed] = useState(false);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -16,9 +22,29 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
     }
   };
 
+  const handleMouseEnter = useCallback(() => {
+    if (!camera.streamingVideoUrl || streamFailed) return;
+    hoverTimerRef.current = setTimeout(() => setShowStream(true), 300);
+  }, [camera.streamingVideoUrl, streamFailed]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setShowStream(false);
+  }, []);
+
+  const handleStreamError = useCallback(() => {
+    setShowStream(false);
+    setStreamFailed(true);
+  }, []);
+
   const subtitle = [camera.route, camera.direction, camera.nearbyPlace]
     .filter(Boolean)
     .join(' · ');
+
+  const hasStream = Boolean(camera.streamingVideoUrl) && !streamFailed;
 
   return (
     <article
@@ -27,6 +53,8 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
       aria-label={`Camera: ${camera.name}${subtitle ? `, ${subtitle}` : ''}`}
       onClick={() => onSelect(camera)}
       onKeyDown={handleKeyDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{
         borderRadius: '0.75rem',
         border: '1px solid var(--color-border)',
@@ -38,26 +66,52 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
         display: 'flex',
         flexDirection: 'column',
       }}
-      onMouseEnter={(e) => {
+      onMouseMove={(e) => {
         (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)';
         (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
         (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border-strong)';
       }}
-      onMouseLeave={(e) => {
+      onFocus={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)';
+        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border-strong)';
+      }}
+      onBlur={(e) => {
         (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)';
         (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
         (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
       }}
     >
-      {/* Image */}
-      <div style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: 'var(--color-bg-elevated)' }}>
+      {/* Image / stream area */}
+      <div style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: 'var(--color-bg-elevated)', overflow: 'hidden' }}>
+
+        {/* Snapshot (always rendered underneath) */}
+        {camera.imageUrl ? (
+          <CameraImage
+            imageUrl={camera.imageUrl}
+            alt={`Traffic camera at ${camera.name}`}
+            updateFrequencyMinutes={camera.imageUpdateFrequencyMinutes}
+            fill
+          />
+        ) : (
+          <CameraImagePlaceholder />
+        )}
+
+        {/* Live stream overlay (mounted on hover) */}
+        {showStream && camera.streamingVideoUrl && (
+          <CardLiveFeed
+            streamUrl={camera.streamingVideoUrl}
+            onError={handleStreamError}
+          />
+        )}
+
+        {/* Offline badge */}
         {!camera.inService && (
           <div
             style={{
               position: 'absolute',
               top: '0.5rem',
               right: '0.5rem',
-              zIndex: 1,
+              zIndex: 2,
               padding: '0.2rem 0.5rem',
               borderRadius: '999px',
               backgroundColor: 'rgba(0,0,0,0.6)',
@@ -72,15 +126,42 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
             Offline
           </div>
         )}
-        {camera.imageUrl ? (
-          <CameraImage
-            imageUrl={camera.imageUrl}
-            alt={`Traffic camera at ${camera.name}`}
-            updateFrequencyMinutes={camera.imageUpdateFrequencyMinutes}
-            fill
-          />
-        ) : (
-          <CameraImagePlaceholder />
+
+        {/* Live badge (bottom-left, only when stream available) */}
+        {hasStream && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              bottom: '0.5rem',
+              left: '0.5rem',
+              zIndex: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              padding: '0.2rem 0.5rem',
+              borderRadius: '999px',
+              backgroundColor: 'rgba(0,0,0,0.55)',
+              color: showStream ? '#22c55e' : 'rgba(255,255,255,0.75)',
+              fontSize: '0.625rem',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              transition: 'color 0.2s',
+            }}
+          >
+            <span
+              style={{
+                width: '5px',
+                height: '5px',
+                borderRadius: '50%',
+                backgroundColor: showStream ? '#22c55e' : 'rgba(255,255,255,0.6)',
+                flexShrink: 0,
+                transition: 'background-color 0.2s',
+              }}
+            />
+            Live
+          </div>
         )}
       </div>
 
