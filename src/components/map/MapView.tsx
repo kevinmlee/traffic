@@ -25,7 +25,7 @@ interface MapViewProps {
 export function MapView({ cameras, onCameraSelect, bbox }: MapViewProps) {
   return (
     <div
-      style={{ height: '600px', width: '100%', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--color-border)' }}
+      style={{ height: '600px', width: '100%', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--color-border)', isolation: 'isolate' }}
       aria-label="Interactive traffic cameras map"
     >
       <MapInner cameras={cameras} onCameraSelect={onCameraSelect} bbox={bbox} />
