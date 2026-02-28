@@ -7,10 +7,14 @@ export function applyFilters(cameras: Camera[], filters: FilterState): Camera[] 
     }
 
     if (filters.categories.size > 0) {
-      const hasMatchingCategory = camera.categories.some(cat =>
-        filters.categories.has(cat)
-      );
-      if (!hasMatchingCategory) return false;
+      // Only filter cameras that have explicit categories — cameras with no
+      // categories (the majority of general highway cameras) always pass through
+      if (camera.categories.length > 0) {
+        const hasMatchingCategory = camera.categories.some(cat =>
+          filters.categories.has(cat)
+        );
+        if (!hasMatchingCategory) return false;
+      }
     }
 
     return true;

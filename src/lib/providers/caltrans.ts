@@ -58,18 +58,28 @@ function getReferenceImages(staticData: CaltransRawImageStatic): string[] {
     .filter(url => !isNotReported(url));
 }
 
+// Mountain pass names that indicate weather cameras
+const PASS_KEYWORDS = ['pass', 'summit', 'grade', 'ridge', 'peak', 'canyon', 'mt ', 'mtn', 'sierra', 'tahoe', 'donner', 'cajon', 'tejon', 'grapevine', 'pacheco', 'altamont', 'gaviota', 'cuesta'];
+
 function inferCategories(raw: CaltransRawCctv): CameraCategory[] {
   const categories: CameraCategory[] = [];
-  const desc = (raw.imageData.imageDescription + ' ' + raw.location.locationName).toLowerCase();
+  const text = (
+    raw.imageData.imageDescription + ' ' +
+    raw.location.locationName + ' ' +
+    raw.location.nearbyPlace + ' ' +
+    raw.location.county
+  ).toLowerCase();
 
-  if (desc.includes('weather') || desc.includes('snow') || desc.includes('fog') || desc.includes('wind')) {
-    categories.push('weather');
-  }
-  if (desc.includes('construction') || desc.includes('work zone') || desc.includes('roadwork')) {
-    categories.push('construction');
-  }
-  // Congestion and accidents are inferred from in-service status and route type
-  // Real categorization would require incident data from a separate feed
+  const isWeather = PASS_KEYWORDS.some(kw => text.includes(kw)) ||
+    text.includes('weather') || text.includes('snow') || text.includes('fog') ||
+    text.includes('wind') || text.includes('chain') || text.includes('ice') ||
+    text.includes('frost') || text.includes('elevation');
+
+  const isConstruction = text.includes('construction') || text.includes('work zone') ||
+    text.includes('roadwork') || text.includes('project');
+
+  if (isWeather) categories.push('weather');
+  if (isConstruction) categories.push('construction');
   return categories;
 }
 
@@ -107,13 +117,20 @@ function normalizeCaltransCamera(raw: CaltransRawCctv, district: number): Camera
   };
 }
 
+// In-process TTL cache — avoids Next.js 2MB fetch cache limit for large district files
+const districtCache = new Map<number, { data: CaltransRawCctv[]; expiresAt: number }>();
+const CACHE_TTL_MS = 60_000;
+
 async function fetchDistrictData(district: number): Promise<CaltransRawCctv[]> {
+  const cached = districtCache.get(district);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
   const paddedDistrict = String(district).padStart(2, '0');
   const url = `https://cwwp2.dot.ca.gov/data/d${district}/cctv/cctvStatusD${paddedDistrict}.json`;
 
-  const res = await fetch(url, {
-    next: { revalidate: 60 },
-  });
+  const res = await fetch(url, { cache: 'no-store' });
 
   if (!res.ok) {
     console.warn(`Caltrans district ${district} fetch failed: ${res.status}`);
@@ -121,7 +138,10 @@ async function fetchDistrictData(district: number): Promise<CaltransRawCctv[]> {
   }
 
   const data: CaltransRawResponse = await res.json() as CaltransRawResponse;
-  return data.data?.map(entry => entry.cctv) ?? [];
+  const entries = data.data?.map(entry => entry.cctv) ?? [];
+
+  districtCache.set(district, { data: entries, expiresAt: Date.now() + CACHE_TTL_MS });
+  return entries;
 }
 
 function getDistrictsForBbox(bbox: BoundingBox): number[] {

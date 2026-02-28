@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
-import { fetchAllCameras } from '@/lib/providers';
-import type { BoundingBox, ApiCamerasResponse, ApiErrorResponse } from '@/types';
+import { providers } from '@/lib/providers';
+import type { BoundingBox, ApiErrorResponse } from '@/types';
 
-const DEFAULT_LIMIT = 30;
-const MAX_LIMIT = 100;
-
-export async function GET(request: Request): Promise<NextResponse<ApiCamerasResponse | ApiErrorResponse>> {
+export async function GET(request: Request): Promise<Response | NextResponse<ApiErrorResponse>> {
   const { searchParams } = new URL(request.url);
 
   let bbox: BoundingBox | undefined;
@@ -23,29 +20,40 @@ export async function GET(request: Request): Promise<NextResponse<ApiCamerasResp
     bbox = { north, south, east, west };
   }
 
-  const limitParam = parseInt(searchParams.get('limit') ?? String(DEFAULT_LIMIT), 10);
-  const offsetParam = parseInt(searchParams.get('offset') ?? '0', 10);
-  const limit = Math.min(isNaN(limitParam) ? DEFAULT_LIMIT : limitParam, MAX_LIMIT);
-  const offset = isNaN(offsetParam) || offsetParam < 0 ? 0 : offsetParam;
+  // Stream NDJSON — each line is one of:
+  //   { type: 'cameras', provider: string, cameras: Camera[] }
+  //   { type: 'done', total: number }
+  const stream = new ReadableStream({
+    async start(controller) {
+      const enc = new TextEncoder();
+      let total = 0;
 
-  try {
-    // Fetch all matching cameras (providers handle bbox filtering)
-    const allCameras = await fetchAllCameras({ bbox });
+      await Promise.all(
+        providers.map(async (provider) => {
+          try {
+            const cameras = await provider.fetchCameras({ bbox });
+            if (cameras.length === 0) return;
+            total += cameras.length;
+            controller.enqueue(
+              enc.encode(JSON.stringify({ type: 'cameras', provider: provider.slug, cameras }) + '\n')
+            );
+          } catch (err) {
+            console.warn(`Provider ${provider.slug} failed:`, err);
+          }
+        })
+      );
 
-    const page = allCameras.slice(offset, offset + limit);
+      controller.enqueue(enc.encode(JSON.stringify({ type: 'done', total }) + '\n'));
+      controller.close();
+    },
+  });
 
-    return NextResponse.json({
-      cameras: page,
-      total: allCameras.length,
-      hasMore: offset + limit < allCameras.length,
-      offset,
-      sources: Array.from(new Set(allCameras.map(c => c.provider))),
-    });
-  } catch (err) {
-    console.error('Error fetching cameras:', err);
-    return NextResponse.json(
-      { error: 'Failed to fetch camera data', code: 'FETCH_ERROR' },
-      { status: 500 }
-    );
-  }
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson',
+      'Transfer-Encoding': 'chunked',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 }

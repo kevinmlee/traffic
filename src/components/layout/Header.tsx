@@ -91,7 +91,40 @@ export function Header() {
           </span>
         </div>
 
-        <ThemeToggle />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <a
+            href="https://buymeacoffee.com/sirwafflelot"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Buy me a coffee"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: '0.375rem 0.75rem',
+              borderRadius: '0.5rem',
+              border: '1px solid var(--glass-border)',
+              backgroundColor: 'var(--glass-bg)',
+              color: 'var(--color-text-secondary)',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              transition: 'color 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-brand-500)';
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-brand-500)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-secondary)';
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--glass-border)';
+            }}
+          >
+            ☕ Buy me a coffee
+          </a>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

@@ -1,5 +1,9 @@
 import type { Camera, CameraProvider, CameraQueryOptions } from '@/types';
 import { caltransProvider } from './caltrans';
+// wsdot, ny511, odot require API keys or have changed endpoints — disabled until keys are configured
+// import { wsdotProvider } from './wsdot';
+// import { ny511Provider } from './ny511';
+// import { odotProvider } from './odot';
 
 // Registry of all active providers.
 // To add a new provider: import it here and add to this array.
