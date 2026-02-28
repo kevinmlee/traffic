@@ -33,9 +33,9 @@ export function FilterChips({ filters, onToggle, cameraCounts }: FilterChipsProp
               gap: '0.375rem',
               padding: '0.375rem 0.75rem',
               borderRadius: '999px',
-              border: `1.5px solid ${isActive ? 'var(--color-brand-500)' : 'var(--color-border)'}`,
-              backgroundColor: isActive ? 'var(--color-brand-50)' : 'var(--color-bg-surface)',
-              color: isActive ? 'var(--color-brand-700)' : 'var(--color-text-secondary)',
+              border: `1.5px solid ${isActive ? 'var(--color-bg-accent)' : 'var(--color-border)'}`,
+              backgroundColor: isActive ? 'var(--color-bg-accent)' : 'var(--color-bg-surface)',
+              color: isActive ? 'var(--color-text-on-accent)' : 'var(--color-text-secondary)',
               fontSize: '0.8125rem',
               fontWeight: isActive ? 600 : 400,
               cursor: 'pointer',
@@ -55,8 +55,8 @@ export function FilterChips({ filters, onToggle, cameraCounts }: FilterChipsProp
                   height: '1.25rem',
                   padding: '0 0.25rem',
                   borderRadius: '999px',
-                  backgroundColor: isActive ? 'var(--color-brand-500)' : 'var(--color-bg-elevated)',
-                  color: isActive ? '#fff' : 'var(--color-text-muted)',
+                  backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : 'var(--color-bg-elevated)',
+                  color: isActive ? 'var(--color-text-on-accent)' : 'var(--color-text-muted)',
                   fontSize: '0.6875rem',
                   fontWeight: 600,
                 }}
@@ -73,7 +73,7 @@ export function FilterChips({ filters, onToggle, cameraCounts }: FilterChipsProp
 }
 
 function CategoryIcon({ category, isActive }: { category: CameraCategory; isActive: boolean }) {
-  const color = isActive ? 'var(--color-brand-600)' : 'var(--color-text-muted)';
+  const color = isActive ? 'var(--color-text-on-accent)' : 'var(--color-text-muted)';
 
   switch (category) {
     case 'accidents':

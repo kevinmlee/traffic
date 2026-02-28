@@ -47,7 +47,7 @@
   --color-text-primary:   #fafaf9;
   --color-text-secondary: #a8a29e;
   --color-text-muted:     #57534e;
-  --color-text-on-accent: #ffffff;
+  --color-text-on-accent: #1a1917;
 
   --color-border:        #2e2d2b;
   --color-border-strong: #3d3c39;
@@ -56,10 +56,10 @@
   --shadow-card-hover: 0 8px 20px -4px rgb(0 0 0 / 0.55), 0 4px 8px -4px rgb(0 0 0 / 0.45);
   --shadow-modal:      0 32px 64px -12px rgb(0 0 0 / 0.7), 0 16px 32px -8px rgb(0 0 0 / 0.55);
 
-  /* Brand tints for dark surfaces */
-  --color-brand-50:  rgba(249, 115, 22, 0.1);
-  --color-brand-100: rgba(249, 115, 22, 0.16);
-  --color-brand-700: #fb923c;
+  /* Brand tints for dark surfaces — cream scale */
+  --color-brand-50:  rgba(232, 221, 208, 0.12);
+  --color-brand-100: rgba(232, 221, 208, 0.2);
+  --color-brand-700: #8c7d6e;
 }
 
 /* ── Base ── */
