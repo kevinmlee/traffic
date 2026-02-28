@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect, useId } from 'react';
-import { geocodeAddress, geocodeSuggest } from '@/lib/geocoding';
+import { geocodeAddress } from '@/lib/geocoding';
+// import { geocodeSuggest } from '@/lib/geocoding'; // disabled — autocomplete uses client-side filtering now
 import { bboxFromCenter } from '@/lib/distance';
 import type { GeocodeSuggestion } from '@/lib/geocoding';
 import type { BoundingBox, GeocodedLocation } from '@/types';
@@ -22,31 +23,31 @@ export function SearchBar({ onSearch, onClear, onTextSearch, isLoading = false }
   const [isGeocoding, setIsGeocoding] = useState(false);
 
   const lastGeocodedRef = useRef<string>('');
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const listId = useId();
   const inputId = useId();
 
-  // Debounced autocomplete fetch
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (value.trim().length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
-      const results = await geocodeSuggest(value);
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0);
-      setActiveIndex(-1);
-    }, 300);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [value]);
+  // Autocomplete disabled — typing now filters the loaded camera list directly.
+  // Uncomment to re-enable Nominatim suggestions for location-based searches.
+  // useEffect(() => {
+  //   if (debounceRef.current) clearTimeout(debounceRef.current);
+  //   if (value.trim().length < 2) {
+  //     setSuggestions([]);
+  //     setShowSuggestions(false);
+  //     return;
+  //   }
+  //   debounceRef.current = setTimeout(async () => {
+  //     const results = await geocodeSuggest(value);
+  //     setSuggestions(results);
+  //     setShowSuggestions(results.length > 0);
+  //     setActiveIndex(-1);
+  //   }, 300);
+  //   return () => {
+  //     if (debounceRef.current) clearTimeout(debounceRef.current);
+  //   };
+  // }, [value]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -93,7 +94,7 @@ export function SearchBar({ onSearch, onClear, onTextSearch, isLoading = false }
     });
   }, [onSearch]);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.SyntheticEvent) => {
     e.preventDefault();
     if (activeIndex >= 0 && suggestions[activeIndex]) {
       selectSuggestion(suggestions[activeIndex]);
@@ -193,7 +194,16 @@ export function SearchBar({ onSearch, onClear, onTextSearch, isLoading = false }
             id={inputId}
             type="text"
             value={value}
-            onChange={(e) => { setValue(e.target.value); onTextSearch?.(e.target.value); }}
+            onChange={(e) => {
+              const v = e.target.value;
+              setValue(v);
+              onTextSearch?.(v);
+              // When cleared, reset to homepage state
+              if (!v) {
+                lastGeocodedRef.current = '';
+                onClear();
+              }
+            }}
             onKeyDown={handleKeyDown}
             onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
             onBlur={() => {

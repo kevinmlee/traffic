@@ -2,20 +2,20 @@
 @import "leaflet/dist/leaflet.css";
 
 @theme {
-  /* ── Brand: warm amber-orange ── */
-  --color-brand-50:  #fff8ed;
-  --color-brand-100: #ffefd3;
-  --color-brand-200: #fddba5;
-  --color-brand-400: #fb9f3a;
-  --color-brand-500: #f97316;
-  --color-brand-600: #ea6c0a;
-  --color-brand-700: #c2530b;
+  /* ── Brand: warm cream / off-white ── */
+  --color-brand-50:  #faf9f7;
+  --color-brand-100: #f5f2ee;
+  --color-brand-200: #e8e3db;
+  --color-brand-400: #c9bfb0;
+  --color-brand-500: #e8ddd0;
+  --color-brand-600: #bfb0a0;
+  --color-brand-700: #8c7d6e;
 
   /* ── Light mode surfaces ── */
   --color-bg-base:     #f9f8f6;
   --color-bg-surface:  #ffffff;
   --color-bg-elevated: #f3f2ef;
-  --color-bg-accent:   #f97316;
+  --color-bg-accent:   #1a1917;
 
   /* ── Light mode text ── */
   --color-text-primary:   #1a1917;
@@ -42,7 +42,7 @@
   --color-bg-base:     #111110;
   --color-bg-surface:  #1c1b1a;
   --color-bg-elevated: #282725;
-  --color-bg-accent:   #f97316;
+  --color-bg-accent:   #e8ddd0;
 
   --color-text-primary:   #fafaf9;
   --color-text-secondary: #a8a29e;

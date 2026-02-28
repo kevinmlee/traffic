@@ -47,8 +47,8 @@ export function Header() {
           >
             <defs>
               <linearGradient id="mark-grad" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#fb923c" />
-                <stop offset="100%" stopColor="#ea6c0a" />
+                <stop offset="0%" stopColor="#d4c8b8" />
+                <stop offset="100%" stopColor="#bfb0a0" />
               </linearGradient>
             </defs>
             {/* Rounded square background */}
@@ -71,7 +71,7 @@ export function Header() {
               />
             ))}
             {/* Center lens dot */}
-            <circle cx="15" cy="15" r="2.5" fill="url(#mark-grad)" />
+            <circle cx="15" cy="15" r="2.5" fill="var(--color-bg-elevated)" />
             <circle cx="15" cy="15" r="1.25" fill="white" opacity="0.9" />
           </svg>
 
@@ -87,7 +87,7 @@ export function Header() {
             }}
           >
             <span style={{ color: 'var(--color-text-primary)' }}>Traffic</span>
-            <span style={{ color: 'var(--color-brand-500)' }}>cam</span>
+            <span style={{ color: 'var(--color-brand-600)' }}>cam</span>
           </span>
         </div>
 

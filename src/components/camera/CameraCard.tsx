@@ -40,7 +40,7 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
     setStreamFailed(true);
   }, []);
 
-  const subtitle = [camera.route, camera.direction, camera.nearbyPlace]
+  const subtitle = [camera.route, camera.direction]
     .filter(Boolean)
     .join(' · ');
 
@@ -51,167 +51,201 @@ export function CameraCard({ camera, onSelect }: CameraCardProps) {
       role="button"
       tabIndex={0}
       aria-label={`Camera: ${camera.name}${subtitle ? `, ${subtitle}` : ''}`}
+      title={[camera.name, subtitle, camera.nearbyPlace, camera.county ? `${camera.county} County` : ''].filter(Boolean).join(' · ')}
       onClick={() => onSelect(camera)}
       onKeyDown={handleKeyDown}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{
-        borderRadius: '0.75rem',
-        border: '1px solid var(--color-border)',
-        backgroundColor: 'var(--color-bg-surface)',
+        borderRadius: '0.875rem',
         overflow: 'hidden',
-        boxShadow: 'var(--shadow-card)',
         cursor: 'pointer',
-        transition: 'box-shadow 0.2s, transform 0.2s, border-color 0.2s',
-        display: 'flex',
-        flexDirection: 'column',
+        position: 'relative',
+        aspectRatio: '16/10',
+        backgroundColor: 'var(--color-bg-elevated)',
+        boxShadow: '0 2px 8px -2px rgba(0,0,0,0.18), 0 1px 3px -1px rgba(0,0,0,0.12)',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        display: 'block',
       }}
       onMouseMove={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)';
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border-strong)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 28px -6px rgba(0,0,0,0.32), 0 4px 10px -3px rgba(0,0,0,0.18)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px) scale(1.01)';
       }}
       onFocus={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)';
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border-strong)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px var(--color-brand-500), 0 8px 20px -4px rgba(0,0,0,0.25)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
       }}
       onBlur={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)';
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px -2px rgba(0,0,0,0.18), 0 1px 3px -1px rgba(0,0,0,0.12)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)';
       }}
     >
-      {/* Image / stream area */}
-      <div style={{ position: 'relative', aspectRatio: '16/9', backgroundColor: 'var(--color-bg-elevated)', overflow: 'hidden' }}>
+      {/* Full-bleed image */}
+      {camera.imageUrl ? (
+        <CameraImage
+          imageUrl={camera.imageUrl}
+          alt={`Traffic camera at ${camera.name}`}
+          updateFrequencyMinutes={camera.imageUpdateFrequencyMinutes}
+          fill
+        />
+      ) : (
+        <CameraImagePlaceholder />
+      )}
 
-        {/* Snapshot (always rendered underneath) */}
-        {camera.imageUrl ? (
-          <CameraImage
-            imageUrl={camera.imageUrl}
-            alt={`Traffic camera at ${camera.name}`}
-            updateFrequencyMinutes={camera.imageUpdateFrequencyMinutes}
-            fill
-          />
-        ) : (
-          <CameraImagePlaceholder />
-        )}
+      {/* Live stream overlay */}
+      {showStream && camera.streamingVideoUrl && (
+        <CardLiveFeed
+          streamUrl={camera.streamingVideoUrl}
+          onError={handleStreamError}
+        />
+      )}
 
-        {/* Live stream overlay (mounted on hover) */}
-        {showStream && camera.streamingVideoUrl && (
-          <CardLiveFeed
-            streamUrl={camera.streamingVideoUrl}
-            onError={handleStreamError}
-          />
-        )}
+      {/* Bottom gradient + text overlay */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.48) 38%, transparent 65%)',
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
 
-        {/* Offline badge */}
-        {!camera.inService && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '0.5rem',
-              right: '0.5rem',
-              zIndex: 2,
-              padding: '0.2rem 0.5rem',
-              borderRadius: '999px',
-              backgroundColor: 'rgba(0,0,0,0.6)',
-              color: '#fbbf24',
-              fontSize: '0.6875rem',
-              fontWeight: 600,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}
-            aria-label="Camera out of service"
-          >
-            Offline
-          </div>
-        )}
-
-        {/* Live badge (bottom-left, only when stream available) */}
-        {hasStream && (
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              bottom: '0.5rem',
-              left: '0.5rem',
-              zIndex: 2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-              padding: '0.2rem 0.5rem',
-              borderRadius: '999px',
-              backgroundColor: 'rgba(0,0,0,0.55)',
-              color: showStream ? '#22c55e' : 'rgba(255,255,255,0.75)',
-              fontSize: '0.625rem',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              transition: 'color 0.2s',
-            }}
-          >
-            <span
-              style={{
-                width: '5px',
-                height: '5px',
-                borderRadius: '50%',
-                backgroundColor: showStream ? '#22c55e' : 'rgba(255,255,255,0.6)',
-                flexShrink: 0,
-                transition: 'background-color 0.2s',
-              }}
-            />
-            Live
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div style={{ padding: '0.75rem 0.875rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+      {/* Text content overlaid on gradient */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: '0.875rem 0.875rem 0.75rem',
+          zIndex: 2,
+          pointerEvents: 'none',
+        }}
+      >
         <h3
           title={camera.name}
           style={{
             fontSize: '0.9375rem',
             fontWeight: 600,
-            color: 'var(--color-text-primary)',
+            color: '#ffffff',
             margin: 0,
             lineHeight: 1.3,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            textShadow: '0 1px 4px rgba(0,0,0,0.5)',
           }}
         >
           {camera.name}
         </h3>
-        {subtitle && (
-          <p
-            title={subtitle}
-            style={{
-              fontSize: '0.8125rem',
-              color: 'var(--color-text-secondary)',
-              margin: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {subtitle}
-          </p>
-        )}
-        <p
-          title={`${camera.county} County · District ${camera.district}`}
+        <div
           style={{
-            fontSize: '0.75rem',
-            color: 'var(--color-text-muted)',
-            margin: 0,
-            marginTop: '0.125rem',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.375rem',
+            marginTop: '0.2rem',
           }}
         >
-          {camera.county} County · District {camera.district}
-        </p>
+          {subtitle && (
+            <span
+              title={subtitle}
+              style={{
+                fontSize: '0.75rem',
+                color: 'rgba(255,255,255,0.8)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              {subtitle}
+            </span>
+          )}
+          {camera.nearbyPlace && (
+            <span
+              title={camera.nearbyPlace}
+              style={{
+                fontSize: '0.6875rem',
+                color: 'rgba(255,255,255,0.55)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                flexShrink: 0,
+              }}
+            >
+              {camera.nearbyPlace}
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Offline badge — top right */}
+      {!camera.inService && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '0.5rem',
+            right: '0.5rem',
+            zIndex: 3,
+            padding: '0.2rem 0.5rem',
+            borderRadius: '999px',
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(6px)',
+            color: '#fcd34d',
+            fontSize: '0.625rem',
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+          }}
+          aria-label="Camera out of service"
+        >
+          Offline
+        </div>
+      )}
+
+      {/* Live badge — top left */}
+      {hasStream && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '0.5rem',
+            left: '0.5rem',
+            zIndex: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            padding: '0.2rem 0.5rem',
+            borderRadius: '999px',
+            backgroundColor: showStream ? 'rgba(34,197,94,0.9)' : 'rgba(0,0,0,0.55)',
+            backdropFilter: 'blur(6px)',
+            color: '#ffffff',
+            fontSize: '0.625rem',
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            transition: 'background-color 0.25s',
+          }}
+        >
+          <span
+            style={{
+              width: '5px',
+              height: '5px',
+              borderRadius: '50%',
+              backgroundColor: showStream ? '#ffffff' : 'rgba(34,197,94,0.9)',
+              flexShrink: 0,
+              transition: 'background-color 0.25s',
+              boxShadow: showStream ? '0 0 0 2px rgba(255,255,255,0.3)' : 'none',
+            }}
+          />
+          Live
+        </div>
+      )}
     </article>
   );
 }

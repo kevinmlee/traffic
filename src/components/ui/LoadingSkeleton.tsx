@@ -18,23 +18,13 @@ export function LoadingSkeleton({ style }: LoadingSkeletonProps) {
 
 export function CameraCardSkeleton() {
   return (
-    <div
-      aria-hidden="true"
+    <LoadingSkeleton
       style={{
-        borderRadius: '0.75rem',
-        border: '1px solid var(--color-border)',
-        backgroundColor: 'var(--color-bg-surface)',
-        overflow: 'hidden',
-        boxShadow: 'var(--shadow-card)',
+        borderRadius: '0.875rem',
+        aspectRatio: '16/10',
+        boxShadow: '0 2px 8px -2px rgba(0,0,0,0.18)',
       }}
-    >
-      <LoadingSkeleton style={{ height: '180px', borderRadius: 0 }} />
-      <div style={{ padding: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <LoadingSkeleton style={{ height: '1rem', width: '75%', borderRadius: '0.25rem' }} />
-        <LoadingSkeleton style={{ height: '0.875rem', width: '50%', borderRadius: '0.25rem' }} />
-        <LoadingSkeleton style={{ height: '0.875rem', width: '60%', borderRadius: '0.25rem' }} />
-      </div>
-    </div>
+    />
   );
 }
 
@@ -45,8 +35,8 @@ export function SkeletonGrid({ count = 12 }: { count?: number }) {
       aria-busy="true"
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '1rem',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '0.875rem',
       }}
     >
       {Array.from({ length: count }).map((_, i) => (
