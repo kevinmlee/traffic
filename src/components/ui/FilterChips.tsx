@@ -55,7 +55,7 @@ export function FilterChips({ filters, onToggle, cameraCounts }: FilterChipsProp
                   height: '1.25rem',
                   padding: '0 0.25rem',
                   borderRadius: '999px',
-                  backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : 'var(--color-bg-elevated)',
+                  backgroundColor: isActive ? 'rgba(0,0,0,0.15)' : 'var(--color-bg-elevated)',
                   color: isActive ? 'var(--color-text-on-accent)' : 'var(--color-text-muted)',
                   fontSize: '0.6875rem',
                   fontWeight: 600,
