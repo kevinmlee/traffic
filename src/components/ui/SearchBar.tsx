@@ -9,10 +9,11 @@ import type { BoundingBox, GeocodedLocation } from '@/types';
 interface SearchBarProps {
   onSearch: (bbox: BoundingBox, location: GeocodedLocation) => void;
   onClear: () => void;
+  onTextSearch?: (query: string) => void;
   isLoading?: boolean;
 }
 
-export function SearchBar({ onSearch, onClear, isLoading = false }: SearchBarProps) {
+export function SearchBar({ onSearch, onClear, onTextSearch, isLoading = false }: SearchBarProps) {
   const [value, setValue] = useState('');
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -121,6 +122,7 @@ export function SearchBar({ onSearch, onClear, isLoading = false }: SearchBarPro
     setSuggestions([]);
     setShowSuggestions(false);
     setError(null);
+    onTextSearch?.('');
     onClear();
     inputRef.current?.focus();
   };
@@ -191,7 +193,7 @@ export function SearchBar({ onSearch, onClear, isLoading = false }: SearchBarPro
             id={inputId}
             type="text"
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => { setValue(e.target.value); onTextSearch?.(e.target.value); }}
             onKeyDown={handleKeyDown}
             onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
             onBlur={() => {

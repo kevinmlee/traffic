@@ -25,6 +25,7 @@ import type { ViewMode } from '@/components/ui/ViewToggle';
 export default function HomePage() {
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [filters, setFilters] = useState<FilterState>(createDefaultFilters);
+  const [textQuery, setTextQuery] = useState('');
   const [view, setView] = useState<ViewMode>('grid');
   const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
 
@@ -113,6 +114,7 @@ export default function HomePage() {
     bboxRef.current = undefined;
     setCurrentBbox(undefined);
     setLocationLabel(null);
+    setTextQuery('');
     void streamCameras(undefined);
   }, [streamCameras]);
 
@@ -121,8 +123,8 @@ export default function HomePage() {
   }, []);
 
   const filteredCameras = useMemo(
-    () => applyFilters(cameras, filters),
-    [cameras, filters]
+    () => applyFilters(cameras, filters, textQuery),
+    [cameras, filters, textQuery]
   );
 
   // Count cameras per category for filter chip badges
@@ -164,6 +166,7 @@ export default function HomePage() {
               <SearchBar
                 onSearch={handleSearch}
                 onClear={handleClear}
+                onTextSearch={setTextQuery}
                 isLoading={isLoading}
               />
 
