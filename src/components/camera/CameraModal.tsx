@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { CameraImage, CameraImagePlaceholder } from './CameraImage';
 import { LiveFeedPlayer } from './LiveFeedPlayer';
+import { SnapshotPlayer } from './SnapshotPlayer';
 import type { Camera } from '@/types';
 
 interface CameraModalProps {
@@ -87,12 +88,13 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
         position: 'fixed',
         inset: 0,
         zIndex: 100,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backgroundColor: 'rgba(5, 6, 8, 0.72)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1rem',
-        backdropFilter: 'blur(2px)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
       }}
     >
       <div
@@ -127,11 +129,13 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
             <h2
               id="modal-title"
               style={{
-                fontSize: '1.125rem',
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.3rem',
                 fontWeight: 700,
+                letterSpacing: '-0.02em',
                 color: 'var(--color-text-primary)',
                 margin: 0,
-                lineHeight: 1.3,
+                lineHeight: 1.2,
               }}
             >
               {camera.name}
@@ -241,6 +245,14 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
         >
           {activeTab === 'feed' && camera.streamingVideoUrl ? (
             <LiveFeedPlayer streamUrl={camera.streamingVideoUrl} title={camera.name} />
+          ) : camera.referenceImages.length > 0 ? (
+            <SnapshotPlayer
+              currentImageUrl={camera.imageUrl}
+              referenceImages={camera.referenceImages}
+              cameraName={camera.name}
+              recordedAt={camera.recordedAt}
+              updateFrequencyMinutes={camera.imageUpdateFrequencyMinutes}
+            />
           ) : camera.imageUrl ? (
             <CameraImage
               imageUrl={camera.imageUrl}
@@ -291,55 +303,6 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
               />
             )}
           </dl>
-
-          {/* Reference images */}
-          {camera.referenceImages.length > 0 && (
-            <div>
-              <h3
-                style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  margin: '0 0 0.625rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Recent Snapshots
-              </h3>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  overflowX: 'auto',
-                  paddingBottom: '0.25rem',
-                }}
-                aria-label="Historical camera snapshots"
-              >
-                {camera.referenceImages.slice(0, 6).map((url, i) => (
-                  <div
-                    key={url}
-                    style={{
-                      flexShrink: 0,
-                      width: '120px',
-                      aspectRatio: '16/9',
-                      borderRadius: '0.375rem',
-                      overflow: 'hidden',
-                      backgroundColor: 'var(--color-bg-elevated)',
-                      position: 'relative',
-                    }}
-                  >
-                    <CameraImage
-                      imageUrl={url}
-                      alt={`Historical snapshot ${i + 1} of ${camera.name}`}
-                      updateFrequencyMinutes={null}
-                      fill
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -350,12 +313,13 @@ function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt
+        className="font-mono"
         style={{
-          fontSize: '0.75rem',
-          fontWeight: 600,
+          fontSize: '0.6875rem',
+          fontWeight: 500,
           color: 'var(--color-text-muted)',
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
+          letterSpacing: '0.1em',
           margin: 0,
         }}
       >

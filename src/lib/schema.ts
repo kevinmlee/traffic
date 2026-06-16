@@ -5,7 +5,7 @@ export function buildWebSiteSchema(siteUrl: string): Record<string, unknown> {
     name: 'Traffic Camera Explorer',
     url: siteUrl,
     description:
-      'Explore live California traffic cameras from Caltrans. Find cameras near any address.',
+      'Explore live traffic cameras from around the world. Find cameras near any address.',
     potentialAction: {
       '@type': 'SearchAction',
       target: {

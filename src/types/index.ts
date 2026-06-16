@@ -47,24 +47,25 @@ export interface CameraProvider {
 
 // ─── Filter Types ──────────────────────────────────────────────────────────────
 
+/**
+ * Facets reflect data every provider actually populates, so toggling one
+ * narrows results instead of returning blank. (The old `categories` —
+ * accidents/congestion/weather/construction — were guessed from keywords and
+ * mostly absent, since these are static location feeds, not incident feeds.)
+ */
+export type CameraFacet = 'inService' | 'hasVideo' | 'hasSnapshots';
+
 export interface FilterState {
-  categories: Set<CameraCategory>;
-  inServiceOnly: boolean;
+  facets: Set<CameraFacet>;
 }
 
-export const FILTER_LABELS: Record<CameraCategory, string> = {
-  accidents: 'Accidents',
-  congestion: 'Congestion',
-  construction: 'Construction',
-  weather: 'Weather Cams',
+export const FILTER_LABELS: Record<CameraFacet, string> = {
+  inService: 'In Service',
+  hasVideo: 'Live Video',
+  hasSnapshots: 'Snapshots',
 };
 
-export const ALL_CATEGORIES: CameraCategory[] = [
-  'accidents',
-  'congestion',
-  'construction',
-  'weather',
-];
+export const ALL_FACETS: CameraFacet[] = ['inService', 'hasVideo', 'hasSnapshots'];
 
 // ─── Search / Geocode Types ────────────────────────────────────────────────────
 
