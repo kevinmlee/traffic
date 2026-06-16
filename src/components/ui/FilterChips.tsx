@@ -30,35 +30,43 @@ export function FilterChips({ filters, onToggle, cameraCounts }: FilterChipsProp
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.375rem',
-              padding: '0.375rem 0.75rem',
-              borderRadius: '999px',
-              border: `1.5px solid ${isActive ? 'var(--color-bg-accent)' : 'var(--color-border)'}`,
-              backgroundColor: isActive ? 'var(--color-bg-accent)' : 'var(--color-bg-surface)',
-              color: isActive ? 'var(--color-text-on-accent)' : 'var(--color-text-secondary)',
+              gap: '0.4rem',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '0.6rem',
+              border: `1px solid ${isActive ? 'var(--color-signal-500)' : 'var(--color-border)'}`,
+              backgroundColor: isActive ? 'var(--color-brand-50)' : 'var(--color-bg-base)',
+              color: isActive ? 'var(--color-signal-600)' : 'var(--color-text-secondary)',
               fontSize: '0.8125rem',
-              fontWeight: isActive ? 600 : 400,
+              fontWeight: isActive ? 600 : 500,
               cursor: 'pointer',
               transition: 'all 0.15s',
               whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border-strong)';
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)';
             }}
           >
             <CategoryIcon category={category} isActive={isActive} />
             {FILTER_LABELS[category]}
             {count !== undefined && (
               <span
+                className="font-mono"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  minWidth: '1.25rem',
-                  height: '1.25rem',
-                  padding: '0 0.25rem',
-                  borderRadius: '999px',
-                  backgroundColor: isActive ? 'rgba(0,0,0,0.15)' : 'var(--color-bg-elevated)',
-                  color: isActive ? 'var(--color-text-on-accent)' : 'var(--color-text-muted)',
+                  minWidth: '1.3rem',
+                  height: '1.2rem',
+                  padding: '0 0.3rem',
+                  borderRadius: '0.35rem',
+                  backgroundColor: isActive ? 'var(--color-signal-500)' : 'var(--color-bg-elevated)',
+                  color: isActive ? '#0a0b0d' : 'var(--color-text-muted)',
                   fontSize: '0.6875rem',
                   fontWeight: 600,
+                  fontVariantNumeric: 'tabular-nums',
                 }}
                 aria-hidden="true"
               >
@@ -73,7 +81,7 @@ export function FilterChips({ filters, onToggle, cameraCounts }: FilterChipsProp
 }
 
 function CategoryIcon({ category, isActive }: { category: CameraCategory; isActive: boolean }) {
-  const color = isActive ? 'var(--color-text-on-accent)' : 'var(--color-text-muted)';
+  const color = isActive ? 'var(--color-signal-500)' : 'var(--color-text-muted)';
 
   switch (category) {
     case 'accidents':

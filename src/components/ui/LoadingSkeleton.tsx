@@ -20,8 +20,9 @@ export function CameraCardSkeleton() {
   return (
     <LoadingSkeleton
       style={{
-        borderRadius: '0.875rem',
+        borderRadius: '1rem',
         aspectRatio: '16/10',
+        border: '1px solid var(--color-border)',
         boxShadow: '0 2px 8px -2px rgba(0,0,0,0.18)',
       }}
     />
@@ -35,8 +36,8 @@ export function SkeletonGrid({ count = 12 }: { count?: number }) {
       aria-busy="true"
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: '0.875rem',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+        gap: '1.1rem',
       }}
     >
       {Array.from({ length: count }).map((_, i) => (

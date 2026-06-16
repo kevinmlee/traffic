@@ -1,20 +1,29 @@
 import type { Metadata } from 'next';
-import { Inter, Syne } from 'next/font/google';
+import { Bricolage_Grotesque, Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { buildWebSiteSchema } from '@/lib/schema';
 import '@/app/globals.css';
 
-const inter = Inter({
+// Body — clean, technical, neutral grotesque
+const geist = Geist({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-geist',
 });
 
-const syne = Syne({
+// Telemetry / data labels — monospace
+const geistMono = Geist_Mono({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-syne',
-  weight: ['700', '800'],
+  variable: '--font-mono',
+});
+
+// Display — distinctive, characterful headings
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
+  weight: ['600', '700', '800'],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://traffic-camera-explorer.netlify.app';
@@ -60,7 +69,7 @@ export default function RootLayout({
   const schema = buildWebSiteSchema(siteUrl);
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${syne.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${geist.variable} ${geistMono.variable} ${bricolage.variable}`}>
       <head>
         <script
           type="application/ld+json"

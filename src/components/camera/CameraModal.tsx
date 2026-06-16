@@ -87,12 +87,13 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
         position: 'fixed',
         inset: 0,
         zIndex: 100,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backgroundColor: 'rgba(5, 6, 8, 0.72)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1rem',
-        backdropFilter: 'blur(2px)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
       }}
     >
       <div
@@ -127,11 +128,13 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
             <h2
               id="modal-title"
               style={{
-                fontSize: '1.125rem',
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.3rem',
                 fontWeight: 700,
+                letterSpacing: '-0.02em',
                 color: 'var(--color-text-primary)',
                 margin: 0,
-                lineHeight: 1.3,
+                lineHeight: 1.2,
               }}
             >
               {camera.name}
@@ -350,12 +353,13 @@ function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt
+        className="font-mono"
         style={{
-          fontSize: '0.75rem',
-          fontWeight: 600,
+          fontSize: '0.6875rem',
+          fontWeight: 500,
           color: 'var(--color-text-muted)',
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
+          letterSpacing: '0.1em',
           margin: 0,
         }}
       >

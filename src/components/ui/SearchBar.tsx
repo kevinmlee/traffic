@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect, useId } from 'react';
-import { geocodeAddress } from '@/lib/geocoding';
-// import { geocodeSuggest } from '@/lib/geocoding'; // disabled — autocomplete uses client-side filtering now
+import { geocodeAddress, geocodeSuggest } from '@/lib/geocoding';
 import { bboxFromCenter } from '@/lib/distance';
 import type { GeocodeSuggestion } from '@/lib/geocoding';
 import type { BoundingBox, GeocodedLocation } from '@/types';
@@ -23,31 +22,41 @@ export function SearchBar({ onSearch, onClear, onTextSearch, isLoading = false }
   const [isGeocoding, setIsGeocoding] = useState(false);
 
   const lastGeocodedRef = useRef<string>('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestSeqRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const listId = useId();
   const inputId = useId();
 
-  // Autocomplete disabled — typing now filters the loaded camera list directly.
-  // Uncomment to re-enable Nominatim suggestions for location-based searches.
-  // useEffect(() => {
-  //   if (debounceRef.current) clearTimeout(debounceRef.current);
-  //   if (value.trim().length < 2) {
-  //     setSuggestions([]);
-  //     setShowSuggestions(false);
-  //     return;
-  //   }
-  //   debounceRef.current = setTimeout(async () => {
-  //     const results = await geocodeSuggest(value);
-  //     setSuggestions(results);
-  //     setShowSuggestions(results.length > 0);
-  //     setActiveIndex(-1);
-  //   }, 300);
-  //   return () => {
-  //     if (debounceRef.current) clearTimeout(debounceRef.current);
-  //   };
-  // }, [value]);
+  // Debounced Nominatim autocomplete. Typing also filters the loaded camera
+  // list via onTextSearch (in the input's onChange), so both work together.
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const query = value.trim();
+    // Don't re-fetch suggestions for an address we just committed/selected.
+    if (query.length < 3 || query === lastGeocodedRef.current) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      const seq = ++requestSeqRef.current;
+      const results = await geocodeSuggest(query);
+      // Ignore stale responses that resolved out of order.
+      if (seq !== requestSeqRef.current) return;
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+      setActiveIndex(-1);
+    }, 250);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [value]);
 
   // Close dropdown on outside click
   useEffect(() => {

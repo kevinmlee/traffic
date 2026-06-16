@@ -61,8 +61,8 @@ export function CameraGrid({ cameras, onSelect }: CameraGridProps) {
           <circle cx="12" cy="13" r="3" />
         </svg>
         <div>
-          <p style={{ fontSize: '1rem', fontWeight: 500, color: 'var(--color-text-secondary)', margin: 0 }}>No cameras found</p>
-          <p style={{ fontSize: '0.875rem', margin: '0.25rem 0 0' }}>Try searching a different location or adjusting your filters.</p>
+          <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--color-text-secondary)', margin: 0 }}>No signal</p>
+          <p style={{ fontSize: '0.875rem', margin: '0.35rem 0 0' }}>No cameras match this area or filter. Try a different location.</p>
         </div>
       </div>
     );
@@ -76,20 +76,31 @@ export function CameraGrid({ cameras, onSelect }: CameraGridProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: '0.875rem',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+          gap: '1.1rem',
         }}
       >
-        {visible.map((camera) => (
-          <CameraCard key={camera.id} camera={camera} onSelect={onSelect} />
+        {visible.map((camera, i) => (
+          <CameraCard key={camera.id} camera={camera} onSelect={onSelect} index={i % PAGE} />
         ))}
       </div>
 
       {hasMore ? (
         <div ref={sentinelRef} aria-hidden="true" style={{ height: '1px', marginTop: '2rem' }} />
       ) : (
-        <p aria-live="polite" style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-          All {cameras.length.toLocaleString()} cameras loaded
+        <p
+          aria-live="polite"
+          className="font-mono"
+          style={{
+            textAlign: 'center',
+            marginTop: '2.5rem',
+            fontSize: '0.75rem',
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          — End of feed · {cameras.length.toLocaleString()} cameras —
         </p>
       )}
     </section>

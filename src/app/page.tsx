@@ -10,6 +10,7 @@ import { CameraGrid } from '@/components/camera/CameraGrid';
 import { CameraModal } from '@/components/camera/CameraModal';
 import { MapView } from '@/components/map/MapView';
 import { Header } from '@/components/layout/Header';
+import { Hero } from '@/components/layout/Hero';
 import { Footer } from '@/components/layout/Footer';
 import { toggleCategory, createDefaultFilters, applyFilters } from '@/lib/filters';
 import type {
@@ -151,18 +152,31 @@ export default function HomePage() {
       >
         <Header />
 
-        <main id="main-content" style={{ flex: 1, padding: '1.5rem' }}>
+        <Hero cameraCount={totalCount} locationLabel={locationLabel} />
+
+        <main id="main-content" style={{ flex: 1, padding: '1.75rem 1.5rem 2.5rem' }}>
           <div
             style={{
-              maxWidth: '1400px',
+              maxWidth: '1440px',
               margin: '0 auto',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1.25rem',
+              gap: '1.5rem',
             }}
           >
-            {/* Search + controls */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            {/* Command bar — search + controls in one designed panel */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                padding: '1.1rem',
+                borderRadius: '1rem',
+                border: '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-bg-surface)',
+                boxShadow: 'var(--shadow-card)',
+              }}
+            >
               <SearchBar
                 onSearch={handleSearch}
                 onClear={handleClear}
@@ -177,9 +191,11 @@ export default function HomePage() {
                   justifyContent: 'space-between',
                   gap: '1rem',
                   flexWrap: 'wrap',
+                  paddingTop: '0.9rem',
+                  borderTop: '1px solid var(--color-border)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap', flex: 1 }}>
                   <FilterChips
                     filters={filters}
                     onToggle={handleToggleCategory}
@@ -189,11 +205,29 @@ export default function HomePage() {
                     <span
                       aria-live="polite"
                       aria-atomic="true"
-                      style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}
+                      className="font-mono"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        fontSize: '0.75rem',
+                        color: 'var(--color-text-muted)',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: '0.02em',
+                      }}
                     >
-                      {locationLabel ? `Near ${locationLabel.split(',')[0]}` : 'All cameras'}
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width: '5px',
+                          height: '5px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--color-signal-500)',
+                        }}
+                      />
+                      {locationLabel ? locationLabel.split(',')[0] : 'Statewide'}
                       {' · '}
-                      {totalCount.toLocaleString()} camera{totalCount !== 1 ? 's' : ''}
+                      {totalCount.toLocaleString()} cam{totalCount !== 1 ? 's' : ''}
                     </span>
                   )}
                 </div>

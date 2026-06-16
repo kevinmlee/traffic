@@ -45,10 +45,11 @@ export async function GET(request: NextRequest) {
 
   const params = new URLSearchParams({
     q: q.trim(),
-    format: 'json',
-    limit: '6',
+    format: 'jsonv2',
+    limit: '8',
     countrycodes: 'us',
     addressdetails: '1',
+    dedupe: '1',
     'accept-language': 'en',
   });
 
@@ -62,12 +63,26 @@ export async function GET(request: NextRequest) {
 
     const results: NominatimResult[] = await res.json() as NominatimResult[];
 
-    return NextResponse.json(results.map(r => ({
-      shortName: buildShortName(r),
-      displayName: r.display_name,
-      latitude: parseFloat(r.lat),
-      longitude: parseFloat(r.lon),
-    })));
+    // De-duplicate by short label and cap the list.
+    const seen = new Set<string>();
+    const suggestions = results
+      .map(r => ({
+        shortName: buildShortName(r),
+        displayName: r.display_name,
+        latitude: parseFloat(r.lat),
+        longitude: parseFloat(r.lon),
+      }))
+      .filter(s => {
+        const key = s.shortName.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 6);
+
+    return NextResponse.json(suggestions, {
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+    });
   } catch {
     return NextResponse.json([]);
   }
