@@ -1,17 +1,19 @@
-import type { Camera, CameraCategory, FilterState } from '@/types';
+import type { Camera, CameraFacet, FilterState } from '@/types';
+
+const FACET_PREDICATES: Record<CameraFacet, (camera: Camera) => boolean> = {
+  inService: (c) => c.inService,
+  hasVideo: (c) => Boolean(c.streamingVideoUrl),
+  hasSnapshots: (c) => c.referenceImages.length > 0,
+};
 
 export function applyFilters(cameras: Camera[], filters: FilterState, textQuery = ''): Camera[] {
   const q = textQuery.trim().toLowerCase();
+  const activeFacets = [...filters.facets];
 
   return cameras.filter(camera => {
-    // Category filter: show only cameras that have at least one active category
-    if (filters.categories.size > 0) {
-      const hasMatch = camera.categories.some(cat => filters.categories.has(cat));
-      if (!hasMatch) return false;
-    }
-
-    if (filters.inServiceOnly && !camera.inService) {
-      return false;
+    // Facets are ANDed: a camera must satisfy every active facet.
+    for (const facet of activeFacets) {
+      if (!FACET_PREDICATES[facet](camera)) return false;
     }
 
     // Text search: match against route, name, nearbyPlace, county
@@ -31,22 +33,22 @@ export function applyFilters(cameras: Camera[], filters: FilterState, textQuery 
   });
 }
 
-export function toggleCategory(
-  filters: FilterState,
-  category: CameraCategory
-): FilterState {
-  const next = new Set(filters.categories);
-  if (next.has(category)) {
-    next.delete(category);
+export function toggleFacet(filters: FilterState, facet: CameraFacet): FilterState {
+  const next = new Set(filters.facets);
+  if (next.has(facet)) {
+    next.delete(facet);
   } else {
-    next.add(category);
+    next.add(facet);
   }
-  return { ...filters, categories: next };
+  return { ...filters, facets: next };
 }
 
 export function createDefaultFilters(): FilterState {
   return {
-    categories: new Set<CameraCategory>(),
-    inServiceOnly: false,
+    facets: new Set<CameraFacet>(),
   };
+}
+
+export function clearFilters(): FilterState {
+  return createDefaultFilters();
 }

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { SkipNav } from '@/components/ui/SkipNav';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { ViewToggle } from '@/components/ui/ViewToggle';
-import { FilterChips } from '@/components/ui/FilterChips';
+import { FilterButton } from '@/components/ui/FilterButton';
 import { SkeletonGrid } from '@/components/ui/LoadingSkeleton';
 import { CameraGrid } from '@/components/camera/CameraGrid';
 import { CameraModal } from '@/components/camera/CameraModal';
@@ -12,12 +12,13 @@ import { MapView } from '@/components/map/MapView';
 import { Header } from '@/components/layout/Header';
 import { Hero } from '@/components/layout/Hero';
 import { Footer } from '@/components/layout/Footer';
-import { toggleCategory, createDefaultFilters, applyFilters } from '@/lib/filters';
+import { toggleFacet, createDefaultFilters, clearFilters, applyFilters } from '@/lib/filters';
+import { ALL_FACETS } from '@/types';
 import type {
   Camera,
   BoundingBox,
   GeocodedLocation,
-  CameraCategory,
+  CameraFacet,
   FilterState,
 } from '@/types';
 import type { ViewMode } from '@/components/ui/ViewToggle';
@@ -108,6 +109,9 @@ export default function HomePage() {
     bboxRef.current = bbox;
     setCurrentBbox(bbox);
     setLocationLabel(location.displayName);
+    // Committing a location is a geographic search, not a text search. Clear any
+    // typed query so it doesn't keep filtering the nearby results to nothing.
+    setTextQuery('');
     void streamCameras(bbox);
   }, [streamCameras]);
 
@@ -119,8 +123,12 @@ export default function HomePage() {
     void streamCameras(undefined);
   }, [streamCameras]);
 
-  const handleToggleCategory = useCallback((category: CameraCategory) => {
-    setFilters(prev => toggleCategory(prev, category));
+  const handleToggleFacet = useCallback((facet: CameraFacet) => {
+    setFilters(prev => toggleFacet(prev, facet));
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFilters(clearFilters());
   }, []);
 
   const filteredCameras = useMemo(
@@ -128,13 +136,14 @@ export default function HomePage() {
     [cameras, filters, textQuery]
   );
 
-  // Count cameras per category for filter chip badges
-  const cameraCounts = useMemo(() => {
-    const counts: Partial<Record<CameraCategory, number>> = {};
+  // Count cameras matching each facet, for filter chip badges
+  const facetCounts = useMemo(() => {
+    const counts: Partial<Record<CameraFacet, number>> = {};
+    for (const facet of ALL_FACETS) counts[facet] = 0;
     for (const cam of cameras) {
-      for (const cat of cam.categories) {
-        counts[cat] = (counts[cat] ?? 0) + 1;
-      }
+      if (cam.inService) counts.inService! += 1;
+      if (cam.streamingVideoUrl) counts.hasVideo! += 1;
+      if (cam.referenceImages.length > 0) counts.hasSnapshots! += 1;
     }
     return counts;
   }, [cameras]);
@@ -154,7 +163,7 @@ export default function HomePage() {
 
         <Hero cameraCount={totalCount} locationLabel={locationLabel} />
 
-        <main id="main-content" style={{ flex: 1, padding: '1.75rem 1.5rem 2.5rem' }}>
+        <main id="main-content" className="main-content" style={{ flex: 1, padding: '1.75rem 1.5rem 2.5rem' }}>
           <div
             style={{
               maxWidth: '1440px',
@@ -166,6 +175,7 @@ export default function HomePage() {
           >
             {/* Command bar — search + controls in one designed panel */}
             <div
+              className="command-bar"
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -195,42 +205,12 @@ export default function HomePage() {
                   borderTop: '1px solid var(--color-border)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap', flex: 1 }}>
-                  <FilterChips
-                    filters={filters}
-                    onToggle={handleToggleCategory}
-                    cameraCounts={cameraCounts}
-                  />
-                  {!isLoading && (
-                    <span
-                      aria-live="polite"
-                      aria-atomic="true"
-                      className="font-mono"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        fontSize: '0.75rem',
-                        color: 'var(--color-text-muted)',
-                        whiteSpace: 'nowrap',
-                        letterSpacing: '0.02em',
-                      }}
-                    >
-                      <span
-                        aria-hidden="true"
-                        style={{
-                          width: '5px',
-                          height: '5px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--color-signal-500)',
-                        }}
-                      />
-                      {locationLabel ? locationLabel.split(',')[0] : 'Statewide'}
-                      {' · '}
-                      {totalCount.toLocaleString()} cam{totalCount !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
+                <FilterButton
+                  filters={filters}
+                  onToggle={handleToggleFacet}
+                  onClear={handleClearFilters}
+                  facetCounts={facetCounts}
+                />
                 <ViewToggle view={view} onChange={setView} />
               </div>
             </div>

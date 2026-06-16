@@ -95,43 +95,6 @@ export function Header() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          {/* Live status pill */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              padding: '0.3rem 0.7rem',
-              borderRadius: '999px',
-              border: '1px solid var(--glass-border)',
-              backgroundColor: 'var(--color-bg-elevated)',
-            }}
-            aria-hidden="true"
-          >
-            <span
-              style={{
-                width: '7px',
-                height: '7px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--color-live-500)',
-                animation: 'live-pulse 2s ease-in-out infinite',
-                flexShrink: 0,
-              }}
-            />
-            <span
-              className="font-mono"
-              style={{
-                fontSize: '0.6875rem',
-                fontWeight: 500,
-                letterSpacing: '0.08em',
-                color: 'var(--color-text-secondary)',
-                textTransform: 'uppercase',
-              }}
-            >
-              Streaming
-            </span>
-          </div>
-
           <a
             href="https://buymeacoffee.com/sirwafflelot"
             target="_blank"

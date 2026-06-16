@@ -275,3 +275,34 @@ body {
   clip: auto;
   white-space: normal;
 }
+
+/* ── Command bar (search + filters) ── */
+/* On mobile it sticks below the header, spanning edge to edge. */
+@media (max-width: 640px) {
+  /* Tighter side padding so the stuck command bar can span edge to edge. */
+  .main-content {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .command-bar {
+    position: sticky;
+    top: 4rem; /* header height */
+    z-index: 40;
+    /* opaque so content scrolling underneath doesn't bleed through */
+    background-color: var(--color-bg-surface);
+    margin: -0.25rem -1rem 0; /* bleed to viewport edges for a cleaner stuck bar */
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding: 0.85rem 1rem;
+    box-shadow: 0 6px 16px -10px rgb(0 0 0 / 0.4);
+  }
+}
+
+/* The filter modal slides up from the bottom on mobile, centers on desktop. */
+@media (min-width: 641px) {
+  .filter-modal-backdrop {
+    align-items: center !important;
+  }
+}
