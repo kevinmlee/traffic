@@ -46,8 +46,9 @@ export async function GET(request: NextRequest) {
   const params = new URLSearchParams({
     q: q.trim(),
     format: 'jsonv2',
-    limit: '8',
-    countrycodes: 'us',
+    limit: '10',
+    // No countrycodes restriction — cameras now span the US and Australia, and
+    // we never want to silently drop a real address just because of its country.
     addressdetails: '1',
     dedupe: '1',
     'accept-language': 'en',
@@ -63,7 +64,9 @@ export async function GET(request: NextRequest) {
 
     const results: NominatimResult[] = await res.json() as NominatimResult[];
 
-    // De-duplicate by short label and cap the list.
+    // De-duplicate by the full display name (which is unique per place) rather
+    // than the lossy short label — otherwise two distinct addresses that happen
+    // to share a "street, city, state" summary would silently drop one of them.
     const seen = new Set<string>();
     const suggestions = results
       .map(r => ({
@@ -73,12 +76,12 @@ export async function GET(request: NextRequest) {
         longitude: parseFloat(r.lon),
       }))
       .filter(s => {
-        const key = s.shortName.toLowerCase();
+        const key = s.displayName.toLowerCase();
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
       })
-      .slice(0, 6);
+      .slice(0, 8);
 
     return NextResponse.json(suggestions, {
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     q: address.trim(),
     format: 'json',
     limit: '1',
-    countrycodes: 'us',
+    // No countrycodes restriction — cameras span the US and Australia.
     'accept-language': 'en',
   });
 

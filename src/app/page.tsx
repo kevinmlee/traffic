@@ -15,6 +15,8 @@ import { Header } from '@/components/layout/Header';
 import { Hero } from '@/components/layout/Hero';
 import { Footer } from '@/components/layout/Footer';
 import { toggleFacet, createDefaultFilters, clearFilters, applyFilters } from '@/lib/filters';
+import { haversineDistanceKm, bboxFromCenter } from '@/lib/distance';
+import { locateByIp } from '@/lib/geocoding';
 import { ALL_FACETS } from '@/types';
 import type {
   Camera,
@@ -102,9 +104,25 @@ export default function HomePage() {
     }
   }, []);
 
-  // Initial load
+  // Initial load: scope to the visitor's approximate location (via IP / edge geo)
+  // so we don't fetch the entire multi-thousand global feed up front. Falls back
+  // to the full feed if the location can't be resolved (e.g. local dev).
   useEffect(() => {
-    void streamCameras(undefined);
+    let cancelled = false;
+    (async () => {
+      const loc = await locateByIp();
+      if (cancelled) return;
+      if (loc) {
+        const bbox = bboxFromCenter(loc.latitude, loc.longitude, 30);
+        bboxRef.current = bbox;
+        setCurrentBbox(bbox);
+        if (loc.label) setLocationLabel(loc.label);
+        void streamCameras(bbox);
+      } else {
+        void streamCameras(undefined);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [streamCameras]);
 
   const handleSearch = useCallback((bbox: BoundingBox, location: GeocodedLocation) => {
@@ -133,10 +151,23 @@ export default function HomePage() {
     setFilters(clearFilters());
   }, []);
 
-  const filteredCameras = useMemo(
-    () => applyFilters(cameras, filters, textQuery),
-    [cameras, filters, textQuery]
-  );
+  const filteredCameras = useMemo(() => {
+    const result = applyFilters(cameras, filters, textQuery);
+
+    // When the user has searched a location, surface the closest cameras first
+    // so the top of the grid is the most relevant to the address they entered.
+    if (currentBbox) {
+      const centerLat = (currentBbox.north + currentBbox.south) / 2;
+      const centerLon = (currentBbox.east + currentBbox.west) / 2;
+      return [...result].sort(
+        (a, b) =>
+          haversineDistanceKm(centerLat, centerLon, a.latitude, a.longitude) -
+          haversineDistanceKm(centerLat, centerLon, b.latitude, b.longitude)
+      );
+    }
+
+    return result;
+  }, [cameras, filters, textQuery, currentBbox]);
 
   // Count cameras matching each facet, for filter chip badges
   const facetCounts = useMemo(() => {

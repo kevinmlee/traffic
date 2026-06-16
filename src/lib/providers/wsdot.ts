@@ -1,8 +1,10 @@
-import type { Camera, CameraCategory, CameraProvider, CameraQueryOptions, BoundingBox } from '@/types';
+import type { Camera, CameraProvider, CameraQueryOptions, BoundingBox } from '@/types';
 
-// WSDOT Traffic Camera API — no API key required
-// https://wsdot.wa.gov/traffic/api/
-const BASE_URL = 'https://wsdot.wa.gov/Traffic/api/v2/TravelMonitoringCamera/GetCamerasAsJson';
+// WSDOT (Washington State DOT) Traffic Cameras — no API key required.
+// Served from WSDOT's public ArcGIS REST feature service.
+// https://www.wsdot.wa.gov/arcgis/rest/services/Production/WSDOTTrafficCameras/MapServer/0
+const BASE_URL =
+  'https://www.wsdot.wa.gov/arcgis/rest/services/Production/WSDOTTrafficCameras/MapServer/0/query';
 
 const WSDOT_BOUNDS: BoundingBox = {
   north: 49.05,
@@ -11,61 +13,52 @@ const WSDOT_BOUNDS: BoundingBox = {
   east: -116.91,
 };
 
-interface WsdotCamera {
+interface WsdotAttributes {
   CameraID: number;
-  Title: string;
-  Description: string;
-  CameraLocation: {
-    Latitude: number;
-    Longitude: number;
-    Description: string;
-    RoadName: string;
-    Direction: string;
-    MilePost: number;
-    County: string;
-  };
+  CameraTitl: string;
+  StateRoute: string;
+  CompassDir: string;
+  Latitude: number;
+  Longitude: number;
   ImageURL: string;
-  IsActive: boolean;
-  SortOrder: number;
-  Region: string;
-  DisplayLatitude: number;
-  DisplayLongitude: number;
-  OwnershipTypeID: number;
+  CameraOwne: string;
 }
 
-function inferCategories(cam: WsdotCamera): CameraCategory[] {
-  const text = (cam.Title + ' ' + cam.Description + ' ' + cam.CameraLocation.Description).toLowerCase();
-  const cats: CameraCategory[] = [];
-  if (text.includes('weather') || text.includes('snow') || text.includes('fog') || text.includes('pass')) {
-    cats.push('weather');
-  }
-  if (text.includes('construction') || text.includes('work zone')) {
-    cats.push('construction');
-  }
-  return cats;
+interface WsdotFeature {
+  attributes: WsdotAttributes;
 }
 
-function normalizeCamera(cam: WsdotCamera): Camera {
+interface WsdotResponse {
+  features?: WsdotFeature[];
+}
+
+// ArcGIS uses the literal string "NULL" for missing text values.
+function clean(value: string | null | undefined): string {
+  if (!value || value === 'NULL') return '';
+  return value;
+}
+
+function normalizeCamera(attrs: WsdotAttributes): Camera {
   return {
-    id: `wsdot-${cam.CameraID}`,
+    id: `wsdot-${attrs.CameraID}`,
     provider: 'wsdot',
-    name: cam.Title,
-    nearbyPlace: cam.CameraLocation.Description,
-    county: cam.CameraLocation.County ?? '',
-    route: cam.CameraLocation.RoadName ?? '',
-    direction: cam.CameraLocation.Direction ?? '',
+    name: clean(attrs.CameraTitl),
+    nearbyPlace: '',
+    county: '',
+    route: clean(attrs.StateRoute),
+    direction: clean(attrs.CompassDir),
     district: 0,
-    latitude: cam.CameraLocation.Latitude,
-    longitude: cam.CameraLocation.Longitude,
+    latitude: attrs.Latitude,
+    longitude: attrs.Longitude,
     elevation: null,
-    inService: cam.IsActive,
-    imageUrl: cam.ImageURL || null,
+    inService: true,
+    imageUrl: clean(attrs.ImageURL) || null,
     imageUpdateFrequencyMinutes: 2,
-    imageDescription: cam.Description ?? '',
+    imageDescription: clean(attrs.CameraTitl),
     streamingVideoUrl: null,
     referenceImages: [],
     recordedAt: new Date().toISOString(),
-    categories: inferCategories(cam),
+    categories: [],
   };
 }
 
@@ -82,14 +75,27 @@ export const wsdotProvider: CameraProvider = {
 
     if (bbox && !bboxesOverlap(bbox, WSDOT_BOUNDS)) return [];
 
-    const res = await fetch(BASE_URL, { next: { revalidate: 120 } });
+    const params = new URLSearchParams({
+      where: '1=1',
+      outFields: 'CameraID,CameraTitl,StateRoute,CompassDir,Latitude,Longitude,ImageURL,CameraOwne',
+      f: 'json',
+      returnGeometry: 'false',
+    });
+
+    const res = await fetch(`${BASE_URL}?${params}`, {
+      headers: { 'Accept': 'application/json' },
+      next: { revalidate: 120 },
+    });
+
     if (!res.ok) {
       console.warn(`WSDOT fetch failed: ${res.status}`);
       return [];
     }
 
-    const data = await res.json() as WsdotCamera[];
-    const cameras = data.map(normalizeCamera).filter(c => c.latitude !== 0 && c.longitude !== 0);
+    const data = await res.json() as WsdotResponse;
+    const cameras = (data.features ?? [])
+      .map(f => normalizeCamera(f.attributes))
+      .filter(c => c.latitude !== 0 && c.longitude !== 0 && c.imageUrl);
 
     if (!bbox) return cameras;
     return cameras.filter(
@@ -100,12 +106,21 @@ export const wsdotProvider: CameraProvider = {
 
   async fetchCameraById(id: string): Promise<Camera | null> {
     const cameraId = id.replace('wsdot-', '');
-    const res = await fetch(
-      `https://wsdot.wa.gov/Traffic/api/v2/TravelMonitoringCamera/GetCameraAsJson?CameraID=${cameraId}`,
-      { next: { revalidate: 120 } }
-    );
+    const params = new URLSearchParams({
+      where: `CameraID=${cameraId}`,
+      outFields: 'CameraID,CameraTitl,StateRoute,CompassDir,Latitude,Longitude,ImageURL,CameraOwne',
+      f: 'json',
+      returnGeometry: 'false',
+    });
+
+    const res = await fetch(`${BASE_URL}?${params}`, {
+      headers: { 'Accept': 'application/json' },
+      next: { revalidate: 120 },
+    });
     if (!res.ok) return null;
-    const cam = await res.json() as WsdotCamera;
-    return cam ? normalizeCamera(cam) : null;
+
+    const data = await res.json() as WsdotResponse;
+    const feature = data.features?.[0];
+    return feature ? normalizeCamera(feature.attributes) : null;
   },
 };

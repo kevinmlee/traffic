@@ -1,8 +1,10 @@
-import type { Camera, CameraCategory, CameraProvider, CameraQueryOptions, BoundingBox } from '@/types';
+import type { Camera, CameraProvider, CameraQueryOptions, BoundingBox } from '@/types';
 
-// ODOT Oregon Traffic Camera API — no API key required
-// https://www.tripcheck.com
-const BASE_URL = 'https://api.tripcheck.com/api/1/cctv';
+// ODOT (Oregon DOT) TripCheck Traffic Cameras — no API key required.
+// Served from ODOT's public ArcGIS hosted feature service.
+// https://www.arcgis.com/home/item.html?id=1e3fb7169cd74127b9c1707258a6e6e9
+const BASE_URL =
+  'https://services.arcgis.com/uUvqNMGPm7axC2dD/arcgis/rest/services/TripCheck_Cameras/FeatureServer/0/query';
 
 const ODOT_BOUNDS: BoundingBox = {
   north: 46.30,
@@ -11,60 +13,48 @@ const ODOT_BOUNDS: BoundingBox = {
   east: -116.46,
 };
 
-interface OdotCamera {
-  cctvid: string;
-  cctvname: string;
-  location: {
-    latitude: number;
-    longitude: number;
-    county: string;
-    highway: string;
-    direction: string;
-    milepoint: number;
-    city: string;
-  };
-  operational_status: string;
-  views: Array<{
-    view_id: string;
-    url: string;
-    description: string;
-  }>;
+// This hosted service flattens the original nested shape into prefixed columns,
+// e.g. `attributes_title`, `attributes_latitude`. Field names are exact.
+interface OdotAttributes {
+  attributes_cameraId: number;
+  attributes_title: string;
+  attributes_route: string;
+  attributes_latitude: number;
+  attributes_longitude: number;
+  attributes_filename: string;
 }
 
-function inferCategories(cam: OdotCamera): CameraCategory[] {
-  const text = (cam.cctvname + ' ' + (cam.location.city ?? '')).toLowerCase();
-  const cats: CameraCategory[] = [];
-  if (text.includes('weather') || text.includes('snow') || text.includes('fog') || text.includes('pass')) {
-    cats.push('weather');
-  }
-  if (text.includes('construction') || text.includes('work zone')) {
-    cats.push('construction');
-  }
-  return cats;
+interface OdotFeature {
+  attributes: OdotAttributes;
 }
 
-function normalizeCamera(cam: OdotCamera): Camera {
-  const primaryView = cam.views?.[0];
+interface OdotResponse {
+  features?: OdotFeature[];
+  exceededTransferLimit?: boolean;
+}
+
+function normalizeCamera(attrs: OdotAttributes): Camera {
+  const title = attrs.attributes_title?.trim() ?? '';
   return {
-    id: `odot-${cam.cctvid}`,
+    id: `odot-${attrs.attributes_cameraId}`,
     provider: 'odot',
-    name: cam.cctvname,
-    nearbyPlace: cam.location.city ?? '',
-    county: cam.location.county ?? '',
-    route: cam.location.highway ?? '',
-    direction: cam.location.direction ?? '',
+    name: title,
+    nearbyPlace: '',
+    county: '',
+    route: attrs.attributes_route?.trim() ?? '',
+    direction: '',
     district: 0,
-    latitude: cam.location.latitude,
-    longitude: cam.location.longitude,
+    latitude: attrs.attributes_latitude,
+    longitude: attrs.attributes_longitude,
     elevation: null,
-    inService: cam.operational_status === 'active',
-    imageUrl: primaryView?.url ?? null,
+    inService: true,
+    imageUrl: attrs.attributes_filename || null,
     imageUpdateFrequencyMinutes: 2,
-    imageDescription: primaryView?.description ?? cam.cctvname,
+    imageDescription: title,
     streamingVideoUrl: null,
-    referenceImages: cam.views?.slice(1).map(v => v.url).filter(Boolean) ?? [],
+    referenceImages: [],
     recordedAt: new Date().toISOString(),
-    categories: inferCategories(cam),
+    categories: [],
   };
 }
 
@@ -81,22 +71,43 @@ export const odotProvider: CameraProvider = {
 
     if (bbox && !bboxesOverlap(bbox, ODOT_BOUNDS)) return [];
 
-    const res = await fetch(BASE_URL, {
-      headers: { 'Accept': 'application/json' },
-      next: { revalidate: 120 },
-    });
+    // The service caps each page at maxRecordCount (1000) and there are ~1100+
+    // cameras, so page through with resultOffset until the limit is no longer hit.
+    const PAGE_SIZE = 1000;
+    const features: OdotFeature[] = [];
+    let offset = 0;
 
-    if (!res.ok) {
-      console.warn(`ODOT fetch failed: ${res.status}`);
-      return [];
+    while (true) {
+      const params = new URLSearchParams({
+        where: '1=1',
+        outFields: '*',
+        f: 'json',
+        returnGeometry: 'false',
+        resultOffset: String(offset),
+        resultRecordCount: String(PAGE_SIZE),
+      });
+
+      const res = await fetch(`${BASE_URL}?${params}`, {
+        headers: { 'Accept': 'application/json' },
+        next: { revalidate: 120 },
+      });
+
+      if (!res.ok) {
+        console.warn(`ODOT fetch failed: ${res.status}`);
+        break;
+      }
+
+      const data = await res.json() as OdotResponse;
+      const page = data.features ?? [];
+      features.push(...page);
+
+      if (page.length < PAGE_SIZE && !data.exceededTransferLimit) break;
+      offset += PAGE_SIZE;
     }
 
-    const data = await res.json() as { data?: OdotCamera[] } | OdotCamera[];
-    const raw: OdotCamera[] = Array.isArray(data) ? data : (data as { data?: OdotCamera[] }).data ?? [];
-
-    const cameras = raw
-      .filter(c => c.location?.latitude && c.location?.longitude)
-      .map(normalizeCamera);
+    const cameras = features
+      .map(f => normalizeCamera(f.attributes))
+      .filter(c => c.latitude !== 0 && c.longitude !== 0 && c.imageUrl);
 
     if (!bbox) return cameras;
     return cameras.filter(
@@ -106,13 +117,22 @@ export const odotProvider: CameraProvider = {
   },
 
   async fetchCameraById(id: string): Promise<Camera | null> {
-    const cctvId = id.replace('odot-', '');
-    const res = await fetch(`${BASE_URL}/${cctvId}`, {
+    const cameraId = id.replace('odot-', '');
+    const params = new URLSearchParams({
+      where: `attributes_cameraId=${cameraId}`,
+      outFields: '*',
+      f: 'json',
+      returnGeometry: 'false',
+    });
+
+    const res = await fetch(`${BASE_URL}?${params}`, {
       headers: { 'Accept': 'application/json' },
       next: { revalidate: 120 },
     });
     if (!res.ok) return null;
-    const cam = await res.json() as OdotCamera;
-    return cam ? normalizeCamera(cam) : null;
+
+    const data = await res.json() as OdotResponse;
+    const feature = data.features?.[0];
+    return feature ? normalizeCamera(feature.attributes) : null;
   },
 };
