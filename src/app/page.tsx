@@ -6,6 +6,8 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { ViewToggle } from '@/components/ui/ViewToggle';
 import { FilterButton } from '@/components/ui/FilterButton';
 import { SkeletonGrid } from '@/components/ui/LoadingSkeleton';
+import { Spinner } from '@/components/ui/Spinner';
+import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { CameraGrid } from '@/components/camera/CameraGrid';
 import { CameraModal } from '@/components/camera/CameraModal';
 import { MapView } from '@/components/map/MapView';
@@ -205,12 +207,26 @@ export default function HomePage() {
                   borderTop: '1px solid var(--color-border)',
                 }}
               >
-                <FilterButton
-                  filters={filters}
-                  onToggle={handleToggleFacet}
-                  onClear={handleClearFilters}
-                  facetCounts={facetCounts}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <FilterButton
+                    filters={filters}
+                    onToggle={handleToggleFacet}
+                    onClear={handleClearFilters}
+                    facetCounts={facetCounts}
+                  />
+                  {isLoading && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Spinner size={16} label="Loading cameras" />
+                      <span
+                        className="font-mono"
+                        aria-hidden="true"
+                        style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', letterSpacing: '0.02em' }}
+                      >
+                        Loading…
+                      </span>
+                    </span>
+                  )}
+                </div>
                 <ViewToggle view={view} onChange={setView} />
               </div>
             </div>
@@ -259,6 +275,8 @@ export default function HomePage() {
 
         <Footer />
       </div>
+
+      <ScrollToTop />
 
       {selectedCamera && (
         <CameraModal
