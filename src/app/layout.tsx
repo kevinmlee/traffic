@@ -34,11 +34,11 @@ export const metadata: Metadata = {
     template: '%s | TrafficEye',
   },
   description:
-    'Explore live California traffic cameras from Caltrans. Search by address or browse the map to find cameras near you.',
+    'Explore live traffic cameras from around the world. Search by address or browse the map to find cameras near you.',
   metadataBase: new URL(siteUrl),
   openGraph: {
     title: 'TrafficEye',
-    description: 'Live traffic cameras across California — search by address or browse the map.',
+    description: 'Live traffic cameras around the world — search by address or browse the map.',
     type: 'website',
     url: siteUrl,
     images: [
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'TrafficEye',
-    description: 'Live traffic cameras across California',
+    description: 'Live traffic cameras around the world',
   },
   robots: {
     index: true,

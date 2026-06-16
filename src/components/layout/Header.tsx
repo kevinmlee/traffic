@@ -89,7 +89,7 @@ export function Header() {
               className="eyebrow"
               style={{ fontSize: '0.5625rem', letterSpacing: '0.22em', lineHeight: 1 }}
             >
-              Live · California
+              Live · Worldwide
             </span>
           </div>
         </div>

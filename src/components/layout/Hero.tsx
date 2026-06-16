@@ -59,7 +59,7 @@ export function Hero({ cameraCount, locationLabel }: HeroProps) {
               animation: 'signal-pulse 1.8s ease-in-out infinite',
             }}
           />
-          <span className="eyebrow">Caltrans CCTV · Real-time feed</span>
+          <span className="eyebrow">Live traffic cameras · Worldwide</span>
         </div>
 
         {/* Headline */}
@@ -76,7 +76,7 @@ export function Hero({ cameraCount, locationLabel }: HeroProps) {
             animationDelay: '0.08s',
           }}
         >
-          Watch California&apos;s roads,{' '}
+          Watch the world&apos;s roads,{' '}
           <span
             style={{
               color: 'var(--color-signal-500)',
@@ -99,7 +99,7 @@ export function Hero({ cameraCount, locationLabel }: HeroProps) {
             animationDelay: '0.14s',
           }}
         >
-          Thousands of live traffic cameras across the state. Search any address,
+          Thousands of live traffic cameras around the globe. Search any address,
           scan the map, and watch conditions update in real time.
         </p>
 
@@ -126,9 +126,9 @@ export function Hero({ cameraCount, locationLabel }: HeroProps) {
             label={locationLabel ? 'in view' : 'cameras live'}
           />
           <Divider />
-          <Stat value="12" label="districts" />
+          <Stat value="Global" label="coverage" />
           <Divider />
-          <Stat value="24/7" label="coverage" accent />
+          <Stat value="24/7" label="live" accent />
         </div>
       </div>
     </section>
