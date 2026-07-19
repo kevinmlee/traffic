@@ -11,6 +11,8 @@ export function LiveFeedPlayer({ streamUrl, title }: LiveFeedPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  /** True once a source is actually attached — before this, the bare <video> fires spurious errors */
+  const [attached, setAttached] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -18,18 +20,28 @@ export function LiveFeedPlayer({ streamUrl, title }: LiveFeedPlayerProps) {
 
     setError(false);
     setLoading(true);
+    setAttached(false);
 
     // Safari supports HLS natively
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = streamUrl;
       video.load();
+      setAttached(true);
       return;
     }
 
     // Chrome/Firefox: use hls.js
-    let hlsInstance: { loadSource: (url: string) => void; attachMedia: (el: HTMLVideoElement) => void; destroy: () => void } | null = null;
+    let hlsInstance: {
+      loadSource: (url: string) => void;
+      attachMedia: (el: HTMLVideoElement) => void;
+      destroy: () => void;
+      startLoad: () => void;
+      recoverMediaError: () => void;
+    } | null = null;
+    let cancelled = false;
 
     import('hls.js').then(({ default: Hls }) => {
+      if (cancelled) return;
       if (!Hls.isSupported()) {
         setError(true);
         setLoading(false);
@@ -39,11 +51,21 @@ export function LiveFeedPlayer({ streamUrl, title }: LiveFeedPlayerProps) {
       hlsInstance = hls;
       hls.loadSource(streamUrl);
       hls.attachMedia(video);
-      hls.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean }) => {
-        if (data.fatal) {
-          setError(true);
-          setLoading(false);
+      // Now that hls.js owns the element, its own error events are authoritative
+      setAttached(true);
+      hls.on(Hls.Events.ERROR, (_e: unknown, data: { fatal?: boolean; type?: string }) => {
+        if (!data.fatal) return;
+        // Fatal network/media errors are often recoverable — try once before giving up
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          hls.startLoad();
+          return;
         }
+        if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          hls.recoverMediaError();
+          return;
+        }
+        setError(true);
+        setLoading(false);
       });
     }).catch(() => {
       setError(true);
@@ -51,14 +73,21 @@ export function LiveFeedPlayer({ streamUrl, title }: LiveFeedPlayerProps) {
     });
 
     return () => {
+      cancelled = true;
+      setAttached(false);
       hlsInstance?.destroy();
     };
   }, [streamUrl]);
 
-  if (error) {
-    return (
+  return (
+    <>
+      {error && (
       <div
         style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 2,
+          backgroundColor: 'var(--color-bg-elevated)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -78,12 +107,8 @@ export function LiveFeedPlayer({ streamUrl, title }: LiveFeedPlayerProps) {
         </svg>
         Live feed unavailable
       </div>
-    );
-  }
-
-  return (
-    <>
-      {loading && (
+      )}
+      {loading && !error && (
         <div
           style={{
             position: 'absolute',
@@ -122,7 +147,12 @@ export function LiveFeedPlayer({ streamUrl, title }: LiveFeedPlayerProps) {
         playsInline
         controls
         onCanPlay={() => setLoading(false)}
-        onError={() => { setError(true); setLoading(false); }}
+        onError={() => {
+          // Ignore errors fired before a source is attached (hls.js loads async)
+          if (!attached) return;
+          setError(true);
+          setLoading(false);
+        }}
         style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000', display: 'block' }}
         aria-label={`Live traffic camera feed: ${title}`}
       />
