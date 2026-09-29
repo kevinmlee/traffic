@@ -84,11 +84,10 @@ This project uses ESLint only for code style — no Prettier. Do not add Prettie
 - Sufficient color contrast in both light and dark themes
 
 ## Map Tiles
-- Light mode: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png` (CartoDB Positron)
-- Dark mode: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png` (CartoDB Dark Matter)
-- Subdomains: `['a', 'b', 'c', 'd']`
-- No API key required
-- Attribution: `© OpenStreetMap contributors © CARTO`
+- OpenStreetMap standard tiles: `https://tile.openstreetmap.org/{z}/{x}/{y}.png` — no API key
+- Do NOT use CARTO basemaps — they now require an API key (every tile is an "API KEY REQUIRED" placeholder)
+- No dark style: dark mode inverts `.leaflet-tile-pane` via a CSS filter under `[data-theme="dark"]` in `globals.css`
+- Attribution: `© OpenStreetMap contributors`
 
 ## Environment Variables
 No env vars required for local development (all APIs are public).

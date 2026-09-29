@@ -13,7 +13,7 @@ interface CameraMarkerProps {
 }
 
 // Build a crisp SVG pin as a Leaflet DivIcon — no external URLs, works in any env
-function buildIcon(): DivIcon | null {
+export function buildCameraIcon(): DivIcon | null {
   if (typeof window === 'undefined') return null;
 
   const L = require('leaflet') as LeafletLike;
@@ -46,7 +46,7 @@ export function CameraMarker({ camera, onSelect }: CameraMarkerProps) {
   const [icon, setIcon] = useState<DivIcon | null>(null);
 
   useEffect(() => {
-    setIcon(buildIcon());
+    setIcon(buildCameraIcon());
   }, []);
 
   const subtitle = [camera.route, camera.direction].filter(Boolean).join(' · ');

@@ -42,15 +42,7 @@ export function Footer() {
           >
             OpenStreetMap
           </a>{' '}
-          contributors,{' '}
-          <a
-            href="https://carto.com/attributions"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--color-brand-500)', textDecoration: 'none' }}
-          >
-            CARTO
-          </a>
+          contributors
         </span>
       </div>
     </footer>

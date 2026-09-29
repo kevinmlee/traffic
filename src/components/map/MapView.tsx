@@ -6,13 +6,20 @@ import type { Camera } from '@/types';
 import type { BoundingBox } from '@/types';
 
 // CRITICAL: ssr: false is mandatory — Leaflet accesses window/document at import time.
-// This must be the only entry point that imports MapInner.
+// This must be the only entry point that imports MapInner / LocationMapInner.
 const MapInner = dynamic(() => import('./MapInner'), {
   ssr: false,
   loading: () => (
     <LoadingSkeleton
       style={{ height: '100%', width: '100%', borderRadius: '0.75rem' }}
     />
+  ),
+});
+
+const LocationMapInner = dynamic(() => import('./LocationMapInner'), {
+  ssr: false,
+  loading: () => (
+    <LoadingSkeleton style={{ height: '100%', width: '100%' }} />
   ),
 });
 
@@ -29,6 +36,21 @@ export function MapView({ cameras, onCameraSelect, bbox }: MapViewProps) {
       aria-label="Interactive traffic cameras map"
     >
       <MapInner cameras={cameras} onCameraSelect={onCameraSelect} bbox={bbox} />
+    </div>
+  );
+}
+
+interface CameraLocationMapProps {
+  latitude: number;
+  longitude: number;
+  label: string;
+}
+
+// Small single-pin map used in the camera detail modal
+export function CameraLocationMap({ latitude, longitude, label }: CameraLocationMapProps) {
+  return (
+    <div style={{ height: '100%', width: '100%', isolation: 'isolate' }}>
+      <LocationMapInner latitude={latitude} longitude={longitude} label={label} />
     </div>
   );
 }
