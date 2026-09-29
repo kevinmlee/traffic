@@ -4,6 +4,8 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { CameraImage, CameraImagePlaceholder } from './CameraImage';
 import { LiveFeedPlayer } from './LiveFeedPlayer';
 import { SnapshotPlayer } from './SnapshotPlayer';
+import { CameraLocationMap } from '@/components/map/MapView';
+import { directionToBearing } from '@/lib/direction';
 import type { Camera } from '@/types';
 
 interface CameraModalProps {
@@ -36,14 +38,14 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
     const el = dialogRef.current;
     if (!el) return;
 
-    const focusable = el.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-
     const handleTab = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
+      // Query on each Tab — the location map mounts its controls after the modal opens
+      const focusable = el.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
       if (e.shiftKey) {
         if (document.activeElement === first) {
           e.preventDefault();
@@ -78,6 +80,13 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
         minute: '2-digit',
       })
     : null;
+
+  const hasLocation = Number.isFinite(camera.latitude) && Number.isFinite(camera.longitude)
+    && !(camera.latitude === 0 && camera.longitude === 0);
+  const coordinates = hasLocation
+    ? `${camera.latitude.toFixed(5)}, ${camera.longitude.toFixed(5)}`
+    : null;
+  const bearing = directionToBearing(camera.direction);
 
   return (
     <div
@@ -303,6 +312,74 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
               />
             )}
           </dl>
+
+          {hasLocation && coordinates && (
+            <section aria-labelledby="modal-location-heading">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.25rem 1rem',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                <h3
+                  id="modal-location-heading"
+                  className="font-mono"
+                  style={{
+                    fontSize: '0.6875rem',
+                    fontWeight: 500,
+                    color: 'var(--color-text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    margin: 0,
+                  }}
+                >
+                  Location
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <span
+                    className="font-mono"
+                    style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary)' }}
+                  >
+                    {coordinates}
+                  </span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${camera.latitude},${camera.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-brand-500)' }}
+                  >
+                    Open in Google Maps
+                    <span className="sr-only"> (opens in new tab)</span>
+                  </a>
+                </div>
+              </div>
+              <div
+                style={{
+                  height: '220px',
+                  borderRadius: '0.75rem',
+                  overflow: 'hidden',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                <CameraLocationMap
+                  key={camera.id}
+                  latitude={camera.latitude}
+                  longitude={camera.longitude}
+                  label={camera.name}
+                  bearing={bearing}
+                />
+              </div>
+              {bearing !== null && (
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.375rem 0 0' }}>
+                  Cone shows the approximate direction reported for this camera ({camera.direction}).
+                </p>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </div>
