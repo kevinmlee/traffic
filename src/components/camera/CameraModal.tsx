@@ -5,6 +5,7 @@ import { CameraImage, CameraImagePlaceholder } from './CameraImage';
 import { LiveFeedPlayer } from './LiveFeedPlayer';
 import { SnapshotPlayer } from './SnapshotPlayer';
 import { CameraLocationMap } from '@/components/map/MapView';
+import { directionToBearing } from '@/lib/direction';
 import type { Camera } from '@/types';
 
 interface CameraModalProps {
@@ -85,6 +86,7 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
   const coordinates = hasLocation
     ? `${camera.latitude.toFixed(5)}, ${camera.longitude.toFixed(5)}`
     : null;
+  const bearing = directionToBearing(camera.direction);
 
   return (
     <div
@@ -368,8 +370,14 @@ export function CameraModal({ camera, onClose }: CameraModalProps) {
                   latitude={camera.latitude}
                   longitude={camera.longitude}
                   label={camera.name}
+                  bearing={bearing}
                 />
               </div>
+              {bearing !== null && (
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.375rem 0 0' }}>
+                  Cone shows the approximate direction reported for this camera ({camera.direction}).
+                </p>
+              )}
             </section>
           )}
         </div>

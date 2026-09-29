@@ -44,13 +44,15 @@ interface CameraLocationMapProps {
   latitude: number;
   longitude: number;
   label: string;
+  /** Compass bearing (0 = north) the camera faces; null hides the direction cone */
+  bearing: number | null;
 }
 
 // Small single-pin map used in the camera detail modal
-export function CameraLocationMap({ latitude, longitude, label }: CameraLocationMapProps) {
+export function CameraLocationMap({ latitude, longitude, label, bearing }: CameraLocationMapProps) {
   return (
     <div style={{ height: '100%', width: '100%', isolation: 'isolate' }}>
-      <LocationMapInner latitude={latitude} longitude={longitude} label={label} />
+      <LocationMapInner latitude={latitude} longitude={longitude} label={label} bearing={bearing} />
     </div>
   );
 }
